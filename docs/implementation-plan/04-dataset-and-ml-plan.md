@@ -1,219 +1,268 @@
 # SignBridge AI: Dataset Research & Machine Learning Plan
 
-**Document ID:** `04-dataset-and-ml-plan`  
-**Status:** Planning & ML Research Blueprint  
-**Primary Reference:** `docs/project-blueprint.pdf` (Sections 9, 10, 14, 15, 20)  
-**Last Updated:** 2026-11-13  
+**Document ID:** `04-dataset-and-ml-plan`
+**Status:** Planning & ML Research Blueprint (Technically Reviewed)
+**Primary Reference:** `docs/project-blueprint.pdf` (Sections 9, 10, 14, 15, 20)
+**Last Updated:** 2026-11-13
 
 ---
 
 ## 1. Overview & Machine Learning Objectives
 
-SignBridge AI aims to solve **continuous, sentence-level Indian Sign Language (ISL) translation**. Real-world sign communication does not occur as isolated fingerspelled characters; it involves continuous gestures, fluid transitions between signs (coarticulation), two-handed coordination, facial expressions, and upper-body posture.
+SignBridge AI investigates machine learning methods to interpret Indian Sign Language (ISL) signing sequences and produce meaningful written text. Real-world sign communication involves continuous hand movement, fluid transitions between signs (coarticulation), two-handed coordination, facial expressions, and upper-body posture.
 
-### Core ML Goals
-1. **Investigate candidate ISL datasets** to identify verifiable licences, annotation schemes, and signer diversity.
-2. **Standardize visual feature extraction** using MediaPipe keypoints (hands, pose, and face) to decouple model training from raw video background noise and lighting variances.
-3. **Train a reproducible baseline temporal model** (BiLSTM / GRU / 1D-CNN) that maps temporal coordinate sequences into sentence predictions.
-4. **Implement rigorous signer-independent evaluation** to measure real generalization and eliminate data leakage.
-5. **Establish clear uncertainty boundaries** to abstain from predicting when confidence is inadequate.
+### Clear Distinction of Machine Learning Paradigms
+To avoid conflating distinct computer vision and NLP tasks, the project defines and separates three distinct paradigms:
+
+```mermaid
+flowchart TD
+    subgraph Paradigm1 ["1. Closed-Set / Fixed Sentence Classification"]
+        P1In["Input: Full video clip of signing sequence"]
+        P1Model["Temporal Model (e.g. BiLSTM / 1D-CNN) + Pooling"]
+        P1Out["Output: 1-of-K predefined sentence labels (e.g., K=50)"]
+        P1In --> P1Model --> P1Out
+    end
+
+    subgraph Paradigm2 ["2. Gloss-Based Recognition & Translation (CSLR + SLT)"]
+        P2In["Input: Video frame sequence"]
+        P2CSLR["CSLR Model (CTC Loss) -> Discrete Gloss Sequence [D-O-C-T-O-R, PAIN]"]
+        P2SLT["SLT Model (Seq2Seq / Grammar) -> Fluent Spoken Text"]
+        P2In --> P2CSLR --> P2SLT
+    end
+
+    subgraph Paradigm3 ["3. Continuous Video-to-Text Translation (End-to-End SLT)"]
+        P3In["Input: Visual feature sequence (T, D)"]
+        P3Seq2Seq["Direct Encoder-Decoder / Cross-Modal Transformer"]
+        P3Out["Output: Tokenized Natural Text (English / Hindi)"]
+        P3In --> P3Seq2Seq --> P3Out
+    end
+```
+
+- **Scientific Boundary:** A 50-class sentence classifier is **closed-set sentence classification**, **not** unrestricted continuous sign language translation. While an initial prototype baseline may use closed-set classification over validated domain phrases for feasibility, it must be documented honestly as such.
 
 ---
 
-## 2. Research & Comparison of Candidate ISL Datasets
+## 2. In-Depth Audit of Candidate ISL Datasets
 
-The implementation blueprint highlights three candidate datasets for investigation. Each requires thorough verification before downloading or training:
+The implementation blueprint identifies three primary candidate resources. Each dataset exhibits distinct properties, licensing constraints, annotation structures, and research limitations:
 
 ```mermaid
 classDiagram
     class ISL_CSLTR {
-        +Platform: Mendeley Data
-        +Focus: Continuous Sentence Level
-        +Size: Small corpus (~100 sentences)
-        +Annotations: Sentence Text
-        +Verification: Signer count & splits
+        +Source: Mendeley Data
+        +Scale: Small corpus (~100 sentences, ~500-1000 clips)
+        +Setting: Controlled studio / lab lighting
+        +Signers: ~5-7 recorded signers
+        +Annotations: Sentence text labels (Often lacks gloss alignments)
+        +Licence: CC BY 4.0 (Verify specific record version)
+        +Suitability: Prototype baseline classification
     }
     class iSign {
-        +Platform: Hugging Face (ACL 2024)
-        +Focus: Large-scale Continuous ISL
-        +Size: Multi-signer video corpus
-        +Annotations: Sentence pairs
-        +Verification: Non-commercial license & gating
+        +Source: Hugging Face Hub (Findings of ACL 2024)
+        +Scale: Large-scale (~tens of hours, thousands of sentences)
+        +Setting: Public broadcast video (e.g. DD News ISL bulletins)
+        +Signers: Broadcast interpreters (anonymous / professional)
+        +Annotations: Parallel English/Hindi broadcast subtitles
+        +Licence: Research / Non-commercial terms (Gated access)
+        +Suitability: End-to-end translation research
     }
     class ISLTranslate {
-        +Platform: GitHub / Paper (ACL 2023)
-        +Focus: Continuous ISL to English
-        +Size: Curated sentence pairs
-        +Annotations: Sentence-level translation
-        +Verification: Exact splits & video access
+        +Source: GitHub / Findings of ACL 2023
+        +Scale: Moderate (~30,000+ video-sentence pairs)
+        +Setting: Curated educational & public YouTube clips
+        +Signers: Multiple diverse signers across videos
+        +Annotations: Direct video-to-English translation sentences
+        +Licence: Academic research use only
+        +Suitability: Continuous video-to-text benchmark
     }
 ```
 
-### Detailed Dataset Comparison
+### Detailed Dataset Comparison & Characteristics
 
-| Feature / Criterion | **ISL-CSLTR** | **iSign** | **ISLTranslate** |
+| Parameter / Dimension | **ISL-CSLTR** | **iSign** | **ISLTranslate** |
 | :--- | :--- | :--- | :--- |
 | **Hosting Platform** | Mendeley Data | Hugging Face Hub | GitHub / Academic Repository |
 | **Academic Reference** | Continuous Sign Language Research | Findings of ACL 2024 | Findings of ACL 2023 |
-| **Annotation Level** | Sentence-level text labels | Sentence-pair translations | Sentence-pair translations |
-| **Gloss Availability** | ⚠️ **Unverified** (Do not assume glosses exist) | ⚠️ **Unverified** (Likely direct sentence pairs) | ⚠️ **Unverified** (Likely direct sequence-to-text) |
-| **Corpus Scale** | Small / Moderate (~hundreds of clips) | Substantial / Multi-hour | Moderate to Large |
-| **Signer Diversity** | Limited set of signers | Broad diverse signers | Multiple verified signers |
-| **Licence Requirements** | Open access / Mendeley licence to verify | Gated Hugging Face access; research licence | Academic research only; citation required |
-| **Verification Checklist** | Check video format, resolution, and signer IDs | Check Hugging Face terms, data access token requirements | Check exact video availability and download URLs |
+| **Primary Domain** | Controlled daily phrases | News broadcasts, public announcements | Educational, public domain topics |
+| **Annotation Level** | Sentence-level text labels | Parallel sentence translations | Parallel sentence-pair translations |
+| **Gloss Availability** | ⚠️ **Unverified** (Do not assume tokenized glosses exist) | ❌ **No glosses** (Direct speech/subtitle text) | ❌ **No glosses** (Direct video-to-text pairs) |
+| **Visual Environment** | Controlled studio, uniform background | Mixed broadcast insets, news overlays, compression | Web video, variable resolutions, lighting |
+| **Signer Metadata** | Signer IDs usually documented | Anonymous interpreters; repeated broadcast signers | Signers not individually tagged across all clips |
+| **Licence & Access** | Open access (CC BY 4.0) | Gated access via Hugging Face token; research only | Non-commercial research licence; citation required |
+| **Major Limitations** | Small vocabulary, limited signer diversity | Domain shift (news signing $\neq$ colloquial conversational ISL) | Signer identity not cleanly isolated across clips |
 
-> ### 🛑 Critical Rules for Dataset Handling
-> 1. **Do Not Assume Gloss Annotations Exist:** Many modern sign language datasets provide video clips paired directly with full sentence translations, **without intermediate gloss annotations**. If glosses are absent, do not attempt gloss-to-text pipelines; use direct sequence-to-text modeling.
-> 2. **Do Not Combine Datasets Without Verification:** Different ISL corpora may use regional signing variations, conflicting sign boundaries, different frame rates, or incompatible licences. Datasets must be evaluated independently first.
+> ### 🛑 Rules for Dataset Handling
+> 1. **Do Not Assume Gloss Annotations Exist:** Neither iSign nor ISLTranslate contains verified, frame-aligned gloss sequences. They are parallel video-to-text corpora. Gloss-based CTC architectures cannot be applied unless gloss annotations are explicitly verified.
+> 2. **Do Not Combine Datasets Arbitrarily:** Datasets originate from different signers, regional dialects of ISL, frame rates, and visual conditions. They must not be pooled without rigorous domain adaptation and alignment checks.
+> 3. **Verify Download Licences:** Commercial use or public deployment of models trained on academic-only datasets is prohibited without explicit licensing compliance.
 
 ---
 
-## 3. Data Audit, Cleaning & Preprocessing Workflow
+## 3. Signer-Independent Splitting & Video Grouping Strategy
 
-Before passing any video into a neural network, a rigorous data audit and cleaning pipeline must be executed:
+### Correcting the Hypothetical S1–S10 Split
+Previous drafts utilized an invented toy example (`S1–S10`). In real-world sign language modeling, naive random splitting or fictional signer lists cause catastrophic data leakage:
 
 ```mermaid
 flowchart TD
-    Raw[Raw Dataset Videos & Labels] --> Audit[1. Dataset Audit: Check IDs, Labels & Licences]
-    Audit --> Filter[2. Quality Filtering: Drop Corrupted / Blank Clips]
-    Filter --> Resize[3. Spatial Standardisation: Standard Aspect & Dimensions]
-    Resize --> FPS[4. Temporal Standardisation: Resample to 25 FPS]
-    FPS --> Extract[5. MediaPipe Landmark Extraction]
-    Extract --> Cache[6. Cache Landmark Coordinates as NumPy / HDF5]
-    Cache --> Split[7. Signer-Independent Train/Val/Test Split]
+    subgraph DataLeakageRisk ["Data Leakage Risks in Continuous Datasets"]
+        ClipA["Broadcast Video 101 - Clip 1 (Sentence A)"]
+        ClipB["Broadcast Video 101 - Clip 2 (Sentence B)"]
+        ClipC["Broadcast Video 101 - Clip 3 (Sentence C)"]
+    end
+
+    DataLeakageRisk -->|Naive Random Split| Leak["Leakage: Same signer, background, clothes & lighting in Train AND Test"]
+    DataLeakageRisk -->|Correct Grouped Split| Safe["Grouped by Source Video / Signer: Video 101 stays exclusively in one split"]
 ```
 
-### Data Preprocessing Steps:
-1. **Metadata Verification:** Parse CSV/JSON annotation files. Validate that every video file referenced actually exists on disk and is not 0 bytes.
-2. **Video Integrity Check:** Run an OpenCV sanity check on every clip (`cv2.VideoCapture`). Drop unreadable or truncated video files.
-3. **Temporal Uniformity:** Resample videos to a consistent frame rate ($25\text{ FPS}$). Calculate the distribution of sequence lengths; clip outliers exceeding 12 seconds.
-4. **Signer ID Extraction:** Extract signer identity tags to enable independent train/validation/test partitions.
+### Real-World Partitioning Rules:
+1. **Source Video & Broadcast Grouping:**
+   - Where a dataset derives from segmented broadcast or continuous recordings (e.g. iSign, ISLTranslate), multiple sentence clips originate from the exact same recording session, signer, lighting setup, and camera angle.
+   - **Mandatory Rule:** All clips originating from the same source video identifier (`video_id` or `channel_id`) must be assigned to the **same split**. Placing one clip in train and another in test constitutes severe background and signer leakage.
+2. **Explicit Signer Separation (ISL-CSLTR):**
+   - For datasets with verified signer identifiers, partitioning must be strictly disjoint across signers:
+     - **Training Set ($\sim 70\%$ of signers):** Used for parameter optimization.
+     - **Validation Set ($\sim 15\%$ of signers):** Used for hyperparameter tuning and post-hoc confidence calibration.
+     - **Test Set ($\sim 15\%$ of signers):** Held-out signers evaluated strictly once for final reporting.
+3. **Report Split Distributions Honestly:**
+   - Documentation must report the actual number of signers, total clips, and vocabulary coverage for each split.
 
 ---
 
-## 4. Visual Feature Extraction: MediaPipe Pipeline
+## 4. Temporal Preprocessing & Sampling Strategy
 
-Training deep 3D-CNNs directly on raw RGB video requires massive GPU compute and causes models to overfit to background environments, lighting, and clothing. We extract **geometric 3D skeletal landmarks** using **MediaPipe**:
+### Analysis of Frame Rates, Duration, and Sequence Lengths
+To resolve the contradiction between frame rates ($20\text{--}25\text{ FPS}$), sequence lengths ($T$), and video durations ($1\text{--}8\text{ seconds}$):
 
-```
-Frame (RGB) ──► MediaPipe Hands & Pose ──► Coordinate Extraction ──► Normalization
-```
+$$\text{Total Frames} = \text{Duration (seconds)} \times \text{Sampling Rate (FPS)}$$
 
-### Extracted Landmark Dimensions per Frame:
-- **Left Hand:** 21 landmarks $\times (x, y, z) = 63$ float values.
-- **Right Hand:** 21 landmarks $\times (x, y, z) = 63$ float values.
-- **Upper Body Pose:** 10 selected landmarks (Nose, left/right shoulders, left/right elbows, left/right wrists, left/right pinky/index) $\times (x, y, z) = 30$ float values.
-- **Total Feature Vector ($D$):** $156$ floating-point features per frame.
+| Video Duration | At 25 FPS | At 20 FPS | At 15 FPS |
+| :--- | :--- | :--- | :--- |
+| **2.0 seconds** (Short phrase) | 50 frames | 40 frames | 30 frames |
+| **4.0 seconds** (Average sentence) | 100 frames | 80 frames | 60 frames |
+| **6.0 seconds** (Long sentence) | 150 frames | 120 frames | 90 frames |
+| **8.0 seconds** (Maximum bound) | 200 frames | 160 frames | 120 frames |
 
-### Coordinate Normalization Strategy
-To ensure the model is invariant to where the signer stands in front of the camera:
-1. **Center of Mass Normalization:** Translate coordinates relative to the midpoint between left and right shoulders:
-   $$\vec{p}_{\text{norm}} = \vec{p} - \vec{p}_{\text{mid-shoulder}}$$
-2. **Scale Invariance:** Divide by the Euclidean distance between shoulders (shoulder width) so that signers closer or further from the camera have comparable feature scales.
-3. **Missing Hand Imputation:** If a one-handed sign is performed and the other hand is at the side/undetected, pad the missing hand coordinates with zeros (or a dedicated missingness mask).
+### Experimentally Justified Strategy:
+1. **Avoid Extreme Downsampling:** Hand and finger articulators in ISL move at speeds requiring at least **$15\text{ to }20\text{ FPS}$** to prevent motion aliasing. Downsampling to $5\text{ FPS}$ destroys sign clarity.
+2. **Standardize Target Sampling Rate ($20\text{ FPS}$):** Provides a robust compromise between capturing fluid gestures and bounding sequence length.
+3. **Dynamic Sequence Handling:**
+   - Rather than forcing all clips to an arbitrary fixed 60 frames, the DataLoader will pad clips dynamically to the maximum length within each batch (`torch.nn.utils.rnn.pad_sequence`).
+   - For recurrent models, `pack_padded_sequence` ensures that zero-padding does not distort recurrent hidden states.
+   - The maximum sequence upper bound is set to $T_{\max} = 160$ frames (corresponding to the full 8.0-second video duration cap at 20 FPS).
 
 ---
 
-## 5. Temporal Modeling Strategy & Baseline Architecture
+## 5. Visual Feature Extraction: MediaPipe Candidate Representations
 
-### Why a Lightweight Baseline First?
-Starting directly with a massive Transformer or 3D-ResNet often leads to severe overfitting on small-to-medium sign datasets. Following the blueprint, we first implement a robust, lightweight **Bidirectional LSTM / GRU** baseline.
+### MediaPipe Hand Landmarker Configuration Parameters:
+When configuring the MediaPipe Hand Landmarker (`mediapipe.tasks.vision.HandLandmarker`), three distinct parameters control extraction stages:
+1. `min_hand_detection_confidence`: Minimum confidence score for the palm detection model to consider palm detection successful.
+2. `min_hand_presence_confidence`: Minimum confidence score for the hand landmark detector model to confirm hand presence and produce coordinates.
+3. `min_tracking_confidence`: Minimum tracking confidence; in the MediaPipe Tasks API, this represents the bounding-box IoU (Intersection-over-Union) threshold between predicted hand boxes across consecutive frames required to maintain tracking without re-triggering palm detection.
+
+*Configuration Defaults:* These three parameters default to `0.5` in MediaPipe Tasks. These represent initial library defaults, not experimentally validated SignBridge AI thresholds, and will be tuned during Phase 2 extraction benchmarks.
+
+### Candidate Landmark Representations
+Do not assume that the 156-dimensional representation is fixed or optimal. MediaPipe provides several distinct extractors:
 
 ```mermaid
 flowchart LR
-    Input["Input Landmarks (B, 60, 156)"] --> Linear["Linear Projection Layer (156 -> 128)"]
-    Linear --> Dropout["Dropout (p=0.3)"]
-    Dropout --> BiLSTM["2-Layer Bidirectional LSTM (Hidden=128)"]
-    BiLSTM --> Attention["Temporal Attention Pooling"]
-    Attention --> Classifier["Classification Head (Linear -> Num Classes)"]
-    Classifier --> Softmax["Softmax & Confidence Output"]
+    Frame["Input Video Frame (RGB)"] --> MP{"MediaPipe Extractor"}
+    MP --> ConfigA["Config A: Hands Only (21 x 2 x 3 = 126 dims)"]
+    MP --> ConfigB["Config B: Hands + Upper Pose (126 + 10x3 = 156 dims)"]
+    MP --> ConfigC["Config C: Hands + Full Pose (126 + 33x3 = 225 dims)"]
+    MP --> ConfigD["Config D: Hands + Pose + Face Non-Manuals (156 + 20x3 = 216 dims)"]
 ```
 
-### Baseline Model Architecture Details (`ISLTemporalModel`):
-```python
-import torch
-import torch.nn as nn
+### Architectural Trade-offs:
+1. **Config A (126-d, Hands Only):** Highly robust, completely invariant to clothing and body shapes; misses signs dependent on chest/head spatial indexing.
+2. **Config B (Hands + Upper Pose — 156-d or Unresolved Symmetrical Subset):**
+   - The 156-D proposal ($126$ hand coords $+ 30$ pose coords) requires **exactly 10 distinct MediaPipe Pose landmarks** ($10 \times 3 = 30$).
+   - A symmetrical 10-landmark candidate subset comprises 5 bilateral pairs:
+     1. Left & Right shoulders (landmarks `11, 12`)
+     2. Left & Right elbows (landmarks `13, 14`)
+     3. Left & Right wrists (landmarks `15, 16`)
+     4. Left & Right hips (landmarks `23, 24` — torso frame)
+     5. Left & Right ears (landmarks `7, 8` — head orientation)
+   - *Anatomical Dilemma & Unresolved Status:* Central head anchor `nose` (`0`) is essential for sign gaze/head location. However, adding `nose` to bilateral pairs produces odd landmark counts:
+     - 7 landmarks ($147$-D): Nose (`0`), Shoulders (`11, 12`), Elbows (`13, 14`), Wrists (`15, 16`).
+     - 9 landmarks ($153$-D): Above 7 + Hips (`23, 24`).
+     - 11 landmarks ($159$-D): Above 9 + Ears (`7, 8`).
+   - Consequently, the exact upper-body landmark subset and final dimension (126-D, 147-D, 153-D, 156-D, or 159-D) is officially marked **unresolved**, to be decided via empirical ablation experiments during Phase 2.
+3. **Config C (225-d, Hands + Full 33-point Pose):** Includes hips, knees, and lower body (adds unnecessary noise for seated/standing desktop signing).
+4. **Config D (216-d, Hands + Upper Pose + Face Mesh Contours):** Adds 20 selected facial landmarks (eyebrows, mouth) to track non-manual grammatical markers. Increases landmark extraction latency.
 
-class ISLTemporalModel(nn.Module):
-    def __init__(self, input_dim=156, hidden_dim=128, num_layers=2, num_classes=50, dropout=0.3):
-        super(ISLTemporalModel, self).__init__()
-        
-        # Projection layer
-        self.embedding = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(dropout)
-        )
-        
-        # Bidirectional GRU / LSTM
-        self.rnn = nn.GRU(
-            input_size=hidden_dim,
-            hidden_size=hidden_dim,
-            num_layers=num_layers,
-            batch_first=True,
-            bidirectional=True,
-            dropout=dropout if num_layers > 1 else 0
-        )
-        
-        # Self-attention pooling over time
-        self.attention = nn.Linear(hidden_dim * 2, 1)
-        
-        # Final classification head
-        self.fc = nn.Linear(hidden_dim * 2, num_classes)
-        
-    def forward(self, x):
-        # x shape: (batch_size, seq_len, input_dim)
-        embeds = self.embedding(x)
-        out, _ = self.rnn(embeds)  # out shape: (batch_size, seq_len, hidden_dim * 2)
-        
-        # Attention weights
-        attn_weights = torch.softmax(self.attention(out), dim=1)  # (batch_size, seq_len, 1)
-        context = torch.sum(out * attn_weights, dim=1)           # (batch_size, hidden_dim * 2)
-        
-        logits = self.fc(context)  # (batch_size, num_classes)
-        return logits
-```
+> **Decision Rule:** Candidate configurations A (126-D), B (147-D to 156-D), and D (216-D) will be evaluated in Phase 2 feature extraction benchmarks. The final dimension will be selected based on detection reliability, extraction latency, and downstream accuracy.
+
+### Coordinate Normalization & Missing Data Strategy:
+- **Torso Normalization:** Subtract the midpoint between left and right shoulders from all $(x, y, z)$ coordinates.
+- **Scale Invariance:** Normalize all coordinates by the inter-shoulder distance.
+- **Missing Landmark Masking:** When a hand is not detected, set coordinates to $0.0$ and provide an explicit binary presence mask channel to the model.
 
 ---
 
-## 6. Training, Signer Separation & Validation Strategy
+## 6. Sequence Modeling Baselines & Candidate Architectures
 
-### Signer-Independent Partitioning
-A common flaw in academic sign language prototypes is mixing the same signer across training and test splits. This results in inflated test accuracy that collapses in real-world usage.
+### Evaluation of Candidate Baselines
+No architecture will be permanently approved until dataset feasibility is confirmed through baseline experiments. The following architectures will be evaluated under identical signer-independent splits:
 
-```
-Total Signers: S = {S1, S2, S3, S4, S5, S6, S7, S8, S9, S10}
-├── Training Set (70%): S1, S2, S3, S4, S5, S6, S7
-├── Validation Set (15%): S8, S9
-└── Test Set (Held-Out) (15%): S10 (Completely unseen signer)
-```
-
-### Hyperparameters & Training Protocol:
-- **Optimizer:** AdamW ($\text{lr} = 1\times 10^{-3}$, weight decay $= 1\times 10^{-4}$).
-- **Scheduler:** CosineAnnealingLR or ReduceLROnPlateau.
-- **Loss Function:** Label Smoothing Cross-Entropy (helps prevent overconfidence).
-- **Batch Size:** 16 or 32.
-- **Regularization:** Random frame dropout (simulates missed frames) and small Gaussian jitter on landmark coordinates.
+1. **Candidate 1: Bidirectional GRU / LSTM with Temporal Attention:**
+   - *Strengths:* Parameter-efficient ($\sim 500\text{k}$ weights), less prone to overfitting on small datasets, robust sequence modeling.
+   - *Role:* Primary baseline candidate.
+2. **Candidate 2: 1D Temporal Convolutional Network (TCN):**
+   - *Strengths:* Parallelizable over time, captures local temporal receptive fields, stable gradients.
+   - *Role:* High-throughput alternative baseline.
+3. **Candidate 3: Lightweight Transformer Encoder:**
+   - *Strengths:* Global attention across all frames.
+   - *Risks:* High sample inefficiency; prone to severe overfitting on small-scale sign datasets without extensive pretraining.
 
 ---
 
-## 7. Evaluation Metrics & Abstention Benchmark
+## 7. Confidence Calibration & Abstention Strategy
 
-To evaluate continuous translation quality honestly:
+### Correcting Softmax Overconfidence
+Raw softmax maximum probabilities from deep networks are uncalibrated and cannot be trusted as confidence measures.
 
-| Metric | Purpose | Target Benchmark |
+```mermaid
+flowchart TD
+    Logits["Model Output Logits (z)"] --> TempScale["Temperature Scaling: z / T_s (T_s learned on Val Split)"]
+    TempScale --> CalProb["Calibrated Probability: P_cal"]
+
+    Quality["Landmark Detection Quality: ratio = detected_frames / total_frames"]
+
+    CalProb & Quality --> Decision{"P_cal >= tau AND ratio >= 0.60?"}
+    Decision -- Yes --> Accept["Accept & Output Sentence"]
+    Decision -- No --> Abstain["Abstain Honestly: Return Repeat Guidance"]
+```
+
+### Calibration Protocol:
+1. **Temperature Scaling ($T_s$):** Optimize a single temperature scalar $T_s > 0$ on the held-out validation set using negative log-likelihood (NLL).
+2. **Expected Calibration Error (ECE):** Measure ECE across 10 confidence bins before and after calibration:
+   $$\text{ECE} = \sum_{m=1}^{M} \frac{|B_m|}{N} \left| \text{acc}(B_m) - \text{conf}(B_m) \right|$$
+   A calibrated model ensures that an output probability of $0.80$ corresponds to an actual accuracy of approximately $80\%$.
+3. **Multi-Criteria Quality Abstention & Detection Ratio:**
+   The model abstains if calibrated confidence is below threshold $\tau$ (e.g. $0.50$) or landmark tracking ratio falls below the provisional $0.60$ threshold.
+   - **Calculation of Landmark Detection Ratio ($R_{\text{detect}}$):**
+     Hand requirements vary by individual lexical sign rather than application domain. A frame is counted as valid if MediaPipe successfully returns a complete 21-point hand landmark collection for that frame, independent of the specific internal detector/presence confidence values used.
+     - *Active-Hand Mode (`any_hand`, Default):* $R_{\text{active}} = \frac{1}{T} \sum_{t=1}^{T} \mathbb{I}(\text{Left Hand present} \lor \text{Right Hand present}) \ge 0.60$.
+     - *Bimanual Mode (`both_hands`):* $R_{\text{bimanual}} = \frac{1}{T} \sum_{t=1}^{T} \mathbb{I}(\text{Left Hand present} \land \text{Right Hand present}) \ge 0.60$, selected according to individual sign annotations.
+   - The $0.60$ threshold is provisional and configurable via `MIN_LANDMARK_DETECTION_RATIO`.
+   - *Limitations:* Self-occlusion during two-handed interactions and fast motion blur can cause temporary tracking losses.
+
+---
+
+## 8. Provisional Evaluation Targets & Benchmarks
+
+All evaluation figures previously stated as guaranteed targets are now explicitly marked as **provisional research targets** requiring experimental validation:
+
+| Metric | Proposed Evaluation Focus | Provisional Target (To be verified empirically) |
 | :--- | :--- | :--- |
-| **Top-1 Sentence Accuracy** | Exact match on validated phrase set | $>75\%$ on held-out signers |
-| **Word Error Rate (WER)** | $\text{WER} = \frac{S + D + I}{N}$ (Substitutions, Deletions, Insertions) | $<25\%$ on supported domain phrases |
-| **BLEU-4 / ROUGE-L** | N-gram overlap for sentence translation fluency | $>0.50$ BLEU on test references |
-| **Abstention Rate on OOD** | Rate of correctly rejecting out-of-domain / random signing | $>90\%$ correct abstention |
-| **Latency per Inference** | Time from video ingestion to prediction on CPU | $<400\text{ ms}$ |
+| **Signer-Independent Accuracy** | Exact sentence match on held-out test signers | Provisional target: $>70\%$ on validated phrase subsets |
+| **Word Error Rate (WER)** | Token-level editing distance on translated text | Provisional target: $<30\%$ on supported domain vocabulary |
+| **BLEU-4 / chrF++** | Translation fluency against parallel reference texts | Provisional target: Benchmark against standard NMT baselines |
+| **Abstention Rate on OOD / Noise** | Correct rejection of random waving, out-of-frame, or noise clips | Provisional target: $>85\%$ correct abstention |
+| **Expected Calibration Error (ECE)** | Alignment between confidence scores and true accuracy | Provisional target: $\text{ECE} < 0.10$ post-calibration |
+| **Inference Latency** | Time from video ingestion to prediction on CPU | Provisional target: $<500\text{ ms}$ |
 
----
-
-## 8. Limitations & Fallback Strategy
-
-1. **Unseen Vocabulary Handling:** If the predicted class probability is below threshold ($\tau = 0.55$), the model emits an `ABSTAIN` token. The system never guesses.
-2. **Low Lighting Fallback:** If MediaPipe confidence drops below $0.5$ for more than $40\%$ of frames, prompt: *"Lighting is too low or hands are not visible."*
-3. **No Fabricated Predictions:** Test suites must verify that noise videos or blank videos yield abstention rather than valid sentences.
-
+*Note: Final benchmark targets will be established following the Phase 2 baseline experiments and documented in the Dataset Feasibility Report.*

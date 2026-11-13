@@ -1,215 +1,244 @@
 # SignBridge AI: Translation & Speech Synthesis Plan
 
-**Document ID:** `05-translation-and-speech-plan`  
-**Status:** Planning & Natural Language / Audio Blueprint  
-**Primary Reference:** `docs/project-blueprint.pdf` (Sections 3, 5, 6, 8, 10, 11, 16)  
-**Last Updated:** 2026-11-13  
+**Document ID:** `05-translation-and-speech-plan`
+**Status:** Planning & Natural Language / Audio Blueprint (Technically Reviewed)
+**Primary Reference:** `docs/project-blueprint.pdf` (Sections 3, 5, 6, 8, 10, 11, 16)
+**Last Updated:** 2026-11-13
 
 ---
 
 ## 1. Overview & Dual-Language Objectives
 
-Indian Sign Language (ISL) has its own distinct grammatical rules, syntax, and spatial discourse markers, which do not follow standard English or Hindi word order (ISL generally follows Subject-Object-Verb / SOV structure, with spatial indexing). 
+Indian Sign Language (ISL) possesses its own distinct grammatical structure, syntax, and spatial discourse conventions. ISL does not follow English or Hindi grammar; it typically uses a Subject-Object-Verb (SOV) structure with spatial referencing, directional verbs, and non-manual facial markers.
 
-To ensure effective communication between deaf signers and hearing non-signers, **SignBridge AI** provides:
-1. **Sentence-Level English Generation:** Synthesizing grammatically fluent, readable English text from recognized signing sequences.
-2. **Evaluated Hindi Translation:** Translating the validated English text into natural, accurate Hindi text.
-3. **Bilingual Speech Playback:** Enabling native client-side speech output in both English and Hindi.
-4. **Mandatory Review & Confirmation Gate:** Requiring user review before audio playback to eliminate misunderstandings.
-5. **Safe Handling of Sensitive Domains:** Enforcing strict safeguards for medical, legal, and financial conversations.
+To provide reliable communication between Deaf signers and hearing non-signers, **SignBridge AI** implements:
+1. **Sentence-Level English Generation:** Converting recognized signing sequences into clear, grammatically sound English text.
+2. **Evaluated Hindi Translation:** Translating the validated English output into natural, accurate Hindi text through a two-tier strategy.
+3. **Bilingual Speech Playback:** Enabling client-side speech output in English or Hindi using the browser's native Web Speech API.
+4. **Non-Destructive Human-in-the-Loop Review:** Enforcing a review and editing interface with independent language buffers before audio playback.
+5. **Domain-Specific Verification:** Applying rigorous human evaluation to critical phrases in healthcare, banking, and public services.
 
 ---
 
 ## 2. ISL Recognition Output to Sentence-Level Text
 
-The translation pipeline operates differently depending on the annotation format of the underlying dataset:
+The transition from visual model outputs to natural language depends fundamentally on the annotation scheme of the underlying dataset:
 
 ```mermaid
 flowchart TD
-    subgraph ScenarioA ["Scenario A: Dataset has Gloss Sequences"]
-        GLOSS["Temporal Model Outputs Gloss Tokens (e.g. 'DOCTOR HELP NEED')"]
-        GlossToText["Rule-Based or Seq2Seq Grammar Expansion"]
-        EngA["Fluent English: 'I need help finding the doctor.'"]
-        GLOSS --> GlossToText --> EngA
+    subgraph ScenarioA ["Scenario A: Closed-Set Sentence Classification"]
+        ClassIdx["Model Predicts Class Index (k in 1..K)"]
+        LabelMap["Lookup in Validated Sentence Map"]
+        EngA["Pre-verified English Sentence: 'Where is the doctor?'"]
+        ClassIdx --> LabelMap --> EngA
     end
 
-    subgraph ScenarioB ["Scenario B: Direct Sentence-Level Video/Text"]
-        TENSOR["Temporal Model directly maps to Sentence Index / Beam Search"]
-        EngB["Direct Sentence: 'I need help finding the doctor.'"]
-        TENSOR --> EngB
+    subgraph ScenarioB ["Scenario B: Gloss Sequences (CSLR + SLT)"]
+        GlossSeq["CSLR Outputs Gloss Sequence (e.g. 'DOCTOR WHERE')"]
+        GlossTrans["Grammar Expansion / Seq2Seq Translation"]
+        EngB["Synthesized English: 'Where is the doctor?'"]
+        GlossSeq --> GlossTrans --> EngB
+    end
+
+    subgraph ScenarioC ["Scenario C: Direct Video-to-Text (End-to-End SLT)"]
+        SeqTokens["Direct Autoregressive Token Generation"]
+        EngC["Generated English: 'Where is the doctor?'"]
+        SeqTokens --> EngC
     end
 ```
 
-### Text Formatting & Normalization
-Regardless of whether Scenario A or B is active:
-- Text is cleaned: punctuation is normalized, capitalization is corrected, and common grammatical contractions are regularized.
-- The system formats the English sentence with appropriate polite phrasing suitable for public communication.
+- **Scope Boundary:** If the baseline utilizes Scenario A (closed-set classification over validated domain phrases), English sentences are curated and reviewed by human evaluators to ensure grammatical fluency for each predefined target class.
 
 ---
 
 ## 3. English to Hindi Translation Architecture
 
-### Translation Strategy Selection
-Because Hindi is one of India's most widely spoken languages, providing accurate Hindi text and audio is a core requirement of SignBridge AI.
+### Correcting Hindi Translation Claims
+Unrestricted neural machine translation cannot guarantee $100\%$ grammatical accuracy. General NMT models frequently introduce grammatical errors, tense mismatches, honorific inaccuracies, or domain-specific misinterpretations (e.g., mistranslating medical terms).
+
+To ensure safety while enabling vocabulary expansion, SignBridge AI employs a **two-tier translation architecture**:
 
 ```mermaid
-flowchart LR
-    EnglishText["English Sentence (Reviewed / Formatted)"] --> TransEngine["Dedicated Translation Engine"]
-    TransEngine --> QualityGate["Safety & Grammar Quality Check"]
-    QualityGate --> HindiText["Fluent Hindi Output (Devanagari Script)"]
+flowchart TD
+    EngInput["Validated / Formatted English Sentence"] --> TierCheck{"Is sentence in Human-Verified Domain Dictionary?"}
+
+    subgraph Tier1 ["Tier 1: Human-Verified Bilingual Lookup (Validated Scope)"]
+        DictLookup["Direct Parallel Mapping in Curated Domain Lexicon"]
+        VerifiedHin["Reviewed Hindi Output (Human-Approved Pair)"]
+        DictLookup --> VerifiedHin
+    end
+
+    subgraph Tier2 ["Tier 2: Neural Machine Translation (Expanded / Open Scope)"]
+        NMTModel["NMT Engine (e.g., IndicTrans2 / MarianMT)"]
+        ReviewGate["Automated Quality & Fluency Check (chrF++ / BLEU)"]
+        GeneralHin["Generated Hindi Output (Requires User Review)"]
+        NMTModel --> ReviewGate --> GeneralHin
+    end
+
+    TierCheck -- Yes (Validated Phrase) --> DictLookup
+    TierCheck -- No (Open Vocabulary) --> NMTModel
 ```
 
-### Evaluated Translation Approaches:
+### Detailed Translation Specifications:
 
-1. **Approach 1: Domain-Mapped Parallel Vocabulary (Recommended for Prototype Baseline)**
-   - For the initial validated scope across the 7 domains, maintain a curated, human-verified bilingual dictionary and phrase pairing lookup.
-   - **Advantage:** $100\%$ grammatical accuracy, zero hallucinations, instant latency, zero cloud translation API costs.
-   - **Suitability:** Perfect for Phase 2–3 prototype scope.
+> ### ⚠️ Critical Distinction: Translation Verification vs. ML Recognition Accuracy
+> Tier 1 English-Hindi phrase pairs are reviewed and approved by qualified bilingual human reviewers. This approval concerns the stored translation pairs, not visual sign recognition. It does not claim guaranteed 100% grammatical accuracy in every context, and ML visual recognition accuracy and translation quality remain separate evaluation measures.
 
-2. **Approach 2: Neural Machine Translation (NMT) Pipeline (For Scaled Vocabulary)**
-   - Integrate an open-source, lightweight multilingual model optimized for Indian languages, such as **IndicTrans2** or **MarianMT (`Helsinki-NLP/opus-mt-en-hi`)**.
-   - Can run locally in the Python backend via Hugging Face `transformers`.
-   - **Evaluation Requirement:** Every candidate model must be benchmarked on representative healthcare, banking, and transit sentences to verify that domain-critical words (e.g., "prescription", "withdrawal", "emergency") are not mistranslated.
+1. **Tier 1: Human-Verified Domain Phrase Dictionary (Prototype Default)**
+   - Curated list of parallel English-Hindi sentence pairs covering the validated subsets across all seven domains.
+   - *Translation Quality:* Stored parallel phrases are reviewed and approved by qualified bilingual human reviewers; translation quality and ML visual recognition accuracy remain separate evaluation measures.
+   - *Latency:* $< 1\text{ ms}$ (instant dictionary lookup).
+   - *Failure Modes:* None for recognized in-vocabulary phrases.
+2. **Tier 2: Neural Machine Translation (NMT) for Expanded Vocabulary**
+   - For open-ended or newly composed sentences, the backend interfaces with an open-source Indian language translation model, such as **IndicTrans2** or **MarianMT (`Helsinki-NLP/opus-mt-en-hi`)**.
+   - *Limitations & Known Risks:*
+     - Gender agreement errors (Hindi verbs inflect based on subject gender, which may be ambiguous in English input).
+     - Formal vs. informal honorifics (`आप` vs. `तुम`).
+     - Vocabulary hallucination on specialized technical terms.
+   - *Validation Protocol:* Every candidate NMT model must be benchmarked on a test set of 100 representative domain sentences evaluated by fluent Hindi speakers before deployment.
 
 ---
 
-## 4. English & Hindi Text-to-Speech (TTS) Architecture
+## 4. Non-Destructive Bilingual Editing Workflow
+
+### Correcting the Language Editing Mechanism
+Previous drafts suggested bidirectional synchronization where editing either language could automatically re-translate the other. This risks silent overwrites, where manual corrections made in one language are destroyed by edits in the other.
+
+SignBridge AI strictly enforces a **non-destructive, decoupled editing policy**:
+
+```mermaid
+flowchart TD
+    Inference["Inference Produces Initial Output"] --> Init["Initialize English Buffer & Hindi Buffer"]
+
+    Init --> EngState["editedEnglishText"]
+    Init --> HinState["editedHindiText"]
+
+    subgraph EnglishEditing ["English Editing Flow"]
+        UserEditsEng["User modifies English text"]
+        UserEditsEng --> EngState
+        UserEditsEng --> ShowReTransBtn["Enable 'Regenerate Hindi' Button"]
+        ShowReTransBtn --> ClickReTrans{"User clicks 'Regenerate Hindi'?"}
+        ClickReTrans -- Yes --> CheckHinDirty{"Has Hindi buffer been manually edited?"}
+        CheckHinDirty -- Yes --> ConfirmModal["Show Warning: 'This will replace your custom Hindi edits. Continue?'"]
+        ConfirmModal -- User Confirms --> CallTransAPI["Call Backend Re-Translation"]
+        CallTransAPI --> HinState
+        CheckHinDirty -- No --> CallTransAPI
+        ClickReTrans -- No --> KeepHin["Hindi Buffer remains unchanged"]
+    end
+
+    subgraph HindiEditing ["Hindi Editing Flow"]
+        UserEditsHin["User modifies Hindi text directly"]
+        UserEditsHin --> HinState
+        UserEditsHin --> BlockOverwrite["English Buffer is NEVER modified or overwritten"]
+    end
+
+    EngState & HinState --> LangSelect["User selects active language: [English] or [हिंदी]"]
+    LangSelect --> ConfirmSpeak["User clicks 'Confirm & Speak'"]
+    ConfirmSpeak --> Speak["Web Speech API speaks confirmed text"]
+```
+
+### Core Editing Rules:
+1. **Independent Buffers:** The frontend maintains two distinct state variables: `editedEnglishText` and `editedHindiText`.
+2. **One-Way Explicit Re-Translation:** Modifying English text allows the user to explicitly request a fresh Hindi translation via a dedicated button.
+3. **No Silent Hindi Overwrite:** If the user has manually edited Hindi, clicking "Regenerate Hindi" triggers an explicit confirmation dialog warning of data loss.
+4. **Strict English Preservation:** Directly typing or editing text in the Hindi buffer **never** triggers back-translation or alters the English text buffer.
+5. **Active Speech Selection:** The user explicitly toggles whether the English or Hindi text is passed to the speech synthesizer.
+
+---
+
+## 5. Bilingual Text-to-Speech (TTS) Architecture
 
 ### Browser Web Speech API (`SpeechSynthesis`)
-SignBridge AI prioritizes client-side speech synthesis using the standard browser Web Speech API. This guarantees:
-- Zero audio bandwidth usage over the network.
-- Immediate playback without waiting for audio file downloads.
-- Works offline once the frontend bundle is loaded.
+SignBridge AI prioritizes client-side speech synthesis using the standard browser Web Speech API:
+- Zero cloud bandwidth consumption.
+- Zero external API costs.
+- Immediate audio generation without waiting for audio file downloads.
 
 ```javascript
 /**
- * Executes bilingual speech playback with safety checks
- * @param {string} text - Text to speak
+ * Speaks confirmed text in selected language with voice fallback handling
+ * @param {string} text - Final confirmed text string
  * @param {string} langCode - 'en-US' or 'hi-IN'
- * @param {function} onEndCallback - Triggered when playback finishes
+ * @param {function} onComplete - Callback when playback finishes
  */
-export function playSynthesizedSpeech(text, langCode, onEndCallback) {
-  if (!window.speechSynthesis) {
-    alert("Speech synthesis is not supported on this device.");
+export function playConfirmedSpeech(text, langCode, onComplete) {
+  if (!('speechSynthesis' in window)) {
+    console.warn('Speech synthesis not supported in this browser.');
     return;
   }
 
-  // Stop any active utterance
-  window.speechSynthesis.cancel();
+  window.speechSynthesis.cancel(); // Terminate any lingering speech
 
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = langCode;
-  utterance.rate = 0.95; // Clear, comfortable cadence
+  utterance.lang = (langCode === 'hi' || langCode === 'hi-IN') ? 'hi-IN' : 'en-US';
+  utterance.rate = 0.95; // Slightly measured rate for maximum clarity
+  utterance.pitch = 1.0;
 
   // Voice selection strategy
   const availableVoices = window.speechSynthesis.getVoices();
-  const selectedVoice = availableVoices.find(voice => 
-    voice.lang.toLowerCase().replace('_', '-').startsWith(langCode.toLowerCase())
+  const matchedVoice = availableVoices.find(voice =>
+    voice.lang.toLowerCase().replace('_', '-').startsWith(utterance.lang.toLowerCase())
   );
 
-  if (selectedVoice) {
-    utterance.voice = selectedVoice;
-  } else {
-    console.warn(`Native voice for ${langCode} not found. Falling back to default system voice.`);
+  if (matchedVoice) {
+    utterance.voice = matchedVoice;
   }
 
   utterance.onend = () => {
-    if (onEndCallback) onEndCallback();
+    if (onComplete) onComplete();
   };
 
   utterance.onerror = (event) => {
-    console.error("Speech synthesis error:", event);
+    console.error('Speech synthesis error:', event);
   };
 
   window.speechSynthesis.speak(utterance);
 }
 ```
 
-### Hindi Voice Availability Strategy across Platforms
-- **Windows / Edge / Chrome:** Standard Microsoft / Google Hindi voices (`hi-IN`) are widely pre-installed.
-- **Android:** Google Text-to-Speech engine provides fluent Hindi speech natively.
-- **macOS / iOS:** Lekha / Hindi system voices available.
-- **Fallback:** If a browser lacks a Hindi voice pack, the UI informs the user and offers copy-to-clipboard functionality so the user can paste into external assistive speech tools.
+### Voice Availability & Fallbacks
+- **English Voices:** Universally available across all modern desktop and mobile browsers.
+- **Hindi Voices (`hi-IN`):** Available natively on Android, modern Windows (Microsoft Kalpana / Hemant), and macOS/iOS (Lekha).
+- **Fallback Policy:** If the browser reports zero installed Hindi voices, the interface alerts the user and displays a prominent **"Copy Text"** button so the output can be pasted into any external communicator.
 
 ---
 
-## 5. Human-in-the-Loop Review & Confirmation Workflow
+## 6. Calibrated Confidence & Abstention Policy
 
-To prevent awkward or dangerous miscommunications, **SignBridge AI enforces a mandatory confirmation step**:
-
-```
-[Inference Completes]
-         │
-         ▼
-[Display Sentence Card]
-  ├── English: "Where is the emergency department?"
-  └── Hindi:   "आपातकालीन विभाग कहाँ है?"
-         │
-         ▼
-[User Review Action]
-  ├── User can click [Edit] to modify wording
-  ├── User toggles language selection [English / Hindi]
-  └── User clicks [Confirm & Speak]
-         │
-         ▼
-[Speech Synthesizer Plays Confirmed Audio]
-```
-
-### Safety Principles:
-1. **No Automatic Speech Playback:** Audio **never** plays automatically upon video upload. The user must review the text and explicitly click "Confirm & Speak".
-2. **Bidirectional Synchronization:** If a bilingual user edits the English text, the system provides a one-click button to re-generate the Hindi text (or vice versa).
-3. **Clear Recording Reset:** Once spoken, a prominent "New Sign" button clears the review card and re-activates the camera preview.
-
----
-
-## 6. Confidence Scoring & Uncertainty Management
-
-The platform adheres to an honest **Abstention Policy**:
-
-$$\text{Confidence Score } C = P(\hat{y} \mid X) \in [0, 1]$$
+### Decision Logic
+Audio output directly affects human safety and dignity in public settings. Therefore, speech synthesis is governed by a strict confirmation gate and validation-calibrated confidence:
 
 ```mermaid
 flowchart TD
-    Score["Model Output Confidence (C)"]
-    Score --> Check{"Is C >= 0.55 and Hands Detected?"}
-    Check -- Yes --> Success["Display Translation for User Review"]
-    Check -- No --> Abstain["Display Honest Abstention & Repeat Guidance"]
-    
-    Abstain --> OptionA["Prompt: 'Please adjust lighting and repeat sign.'"]
-    Abstain --> OptionB["Option: Type manual text message directly"]
+    Conf["Calibrated Confidence (C_cal) & Landmark Ratio (R_lm)"]
+    Conf --> Check{"C_cal >= 0.50 AND R_lm >= 0.60?"}
+
+    Check -- Yes --> ShowReview["Display Result Card in Review UI"]
+    ShowReview --> WaitForUser["Wait for User Confirmation"]
+    WaitForUser --> UserClicks["User clicks 'Confirm & Speak'"]
+    UserClicks --> Audio["Synthesize Audio via Web Speech API"]
+
+    Check -- No --> Abstain["Withhold Translation & Display Abstention Guidance"]
+    Abstain --> NoAudio["Zero Audio Synthesized"]
+    Abstain --> PromptRepeat["Prompt: 'Sign movement was unclear. Please repeat.'"]
 ```
 
-### Abstention Messages by Failure Cause:
-- **Low Confidence ($C < 0.55$):** *"We were unable to translate this signing sequence with high certainty. Please repeat the sign or type your sentence."*
-- **Missing Hand Keypoints ($< 60\%$ frames with hands):** *"Hands were outside the camera guide or moved too quickly. Please ensure both hands remain inside the frame."*
-- **Duration Out of Bounds ($<1\text{s}$ or $>10\text{s}$):** *"Recording was too brief to interpret a full sign sentence. Please hold each sign clearly."*
+### Abstention Criteria:
+- **Calibrated Confidence Below Threshold ($\hat{P} < 0.50$):** *"We were unable to interpret this signing sequence with high certainty. Please repeat the sign or type your message."*
+- **Low Landmark Detection Ratio ($< 0.60$ frames):** *"Hands were not clearly detected within the camera guide. Please ensure active hand(s) remain inside the guide."* (The ratio $R_{\text{active}}$ or $R_{\text{bimanual}}$ is a separate application-level quality gate computed from the count of frames in which MediaPipe returned valid 21-point hand landmark collections, independent of MediaPipe's internal `min_hand_detection_confidence`, `min_hand_presence_confidence`, and `min_tracking_confidence` defaults. The $0.60$ threshold is provisional and configurable).
+- **Clip Duration Outside Bounds ($< 1.0\text{s}$ or $> 8.0\text{s}$):** *"Recording duration was outside supported limits (1 to 8 seconds). Please sign at natural speed."*
 
 ---
 
-## 7. Translation Quality Evaluation & Human Testing
+## 7. Translation Evaluation & Quality Benchmarking
 
-To measure translation fidelity:
+To ensure that translations remain accurate and culturally appropriate:
 
-1. **Bilingual Evaluation Rubric:**
-   - **Fluency:** Is the output natural and grammatically correct in both English and Hindi? (Scored 1 to 5 by native speakers).
-   - **Adequacy / Meaning Preservation:** Does the translated sentence faithfully convey the intent of the original ISL sign sequence? (Scored 1 to 5).
-2. **Automated Metrics:**
-   - **BLEU-4 & chrF++:** For translated English and Hindi sentences against reference ground truth.
-   - **WER / CER:** Word Error Rate on transcribed English sentences.
-3. **Domain Phrase Coverage:**
-   - Maintain a benchmark test suite of 50 common phrases across the 7 domains to verify translation accuracy before any release.
-
----
-
-## 8. Safe Handling of Sensitive Domain Conversations
-
-In high-stakes environments (Healthcare, Banking, Legal, and Government Services), erroneous translation can lead to adverse real-world consequences:
-
-1. **Prominent Medical & Legal Disclaimer:**
-   - An accessible banner is permanently visible on Healthcare and Banking screens:
-     > *"SignBridge AI is an assistive communication aid. It is not a certified interpreter for medical diagnosis, legal proceedings, or sensitive financial contracts. Always verify with qualified personnel."*
-2. **Explicit Uncertainty over Blind Guessing:**
-   - If a user signs a critical medical phrase (e.g., related to dosage or severe chest pain) and the model is unsure, it **must immediately report uncertainty** rather than offering an incorrect interpretation.
-3. **One-Tap Emergency Dial / External Hand-off:**
-   - On the Healthcare screen, provide quick buttons to clear the screen or call emergency contacts.
-
+1. **Human Evaluation Rubric (Native Bilingual Evaluators):**
+   - **Fluency (1–5 scale):** Evaluates grammatical correctness and natural phrasing in Hindi.
+   - **Adequacy (1–5 scale):** Verifies that the translated Hindi sentence faithfully preserves the original meaning of the English sentence.
+2. **Automated Metrics (for NMT benchmarking):**
+   - **BLEU-4 & chrF++:** Evaluated against parallel bilingual reference corpora.
+   - **Provisional Research Target:** BLEU scores comparable to published IndicTrans2 benchmarks on domain subsets.
+3. **Medical & Banking Phrase Verification:**
+   - All phrases in the Tier 1 dictionary must be reviewed and approved by qualified bilingual human reviewers prior to deployment.
