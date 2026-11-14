@@ -114,4 +114,3 @@ export default function TrustPrivacy() {
     </section>
   );
 }
-

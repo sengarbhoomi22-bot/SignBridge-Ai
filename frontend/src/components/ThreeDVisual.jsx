@@ -359,4 +359,3 @@ export default function ThreeDVisual({ stageIndex = 0, pulseTrigger = 0 }) {
     </div>
   );
 }
-

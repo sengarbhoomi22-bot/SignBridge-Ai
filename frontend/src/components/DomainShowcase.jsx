@@ -154,4 +154,3 @@ export default function DomainShowcase({ onOpenWalkthrough, onPulse }) {
     </section>
   );
 }
-
