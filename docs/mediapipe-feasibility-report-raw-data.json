@@ -1,0 +1,193 @@
+[
+  {
+    "video_name": "free (2).MP4",
+    "signer_id": "Signer 2",
+    "sentence": "are you free today",
+    "resolution": "1920x1080",
+    "fps_declared": 25.0,
+    "total_frames_declared": 78,
+    "frames_read": 78,
+    "frames_left_hand": 32,
+    "frames_right_hand": 43,
+    "frames_both_hands": 29,
+    "frames_pose_detected": 78,
+    "frames_face_detected": 2,
+    "frames_missing_hands": 32,
+    "left_hand_ratio": 0.4103,
+    "right_hand_ratio": 0.5513,
+    "both_hands_ratio": 0.3718,
+    "pose_ratio": 1.0,
+    "face_ratio": 0.0256,
+    "missing_hands_ratio": 0.4103,
+    "processing_time_sec": 12.305,
+    "hand_landmark_shape": {
+      "num_hands_in_sample": 1,
+      "landmarks_per_hand": 21,
+      "coords_per_landmark": 3,
+      "note": "HandLandmarker returns x,y,z normalised [0,1]; z is depth relative to wrist"
+    },
+    "pose_landmark_shape": {
+      "num_pose_instances": 1,
+      "landmarks_per_pose": 33,
+      "coords_per_landmark": 3,
+      "note": "PoseLandmarker (lite) returns x,y,z; world_landmarks also available with x,y,z in metres"
+    },
+    "face_landmark_shape": {
+      "landmarks_per_face": 478,
+      "coords_per_landmark": 3,
+      "note": "FaceLandmarker returns x,y,z normalised; z is depth relative to face centre"
+    }
+  },
+  {
+    "video_name": "MVI_6209.MP4",
+    "signer_id": "Signer 1",
+    "sentence": "are you hiding something",
+    "resolution": "1920x1080",
+    "fps_declared": 25.0,
+    "total_frames_declared": 95,
+    "frames_read": 95,
+    "frames_left_hand": 72,
+    "frames_right_hand": 42,
+    "frames_both_hands": 27,
+    "frames_pose_detected": 95,
+    "frames_face_detected": 0,
+    "frames_missing_hands": 8,
+    "left_hand_ratio": 0.7579,
+    "right_hand_ratio": 0.4421,
+    "both_hands_ratio": 0.2842,
+    "pose_ratio": 1.0,
+    "face_ratio": 0.0,
+    "missing_hands_ratio": 0.0842,
+    "processing_time_sec": 14.081,
+    "hand_landmark_shape": {
+      "num_hands_in_sample": 1,
+      "landmarks_per_hand": 21,
+      "coords_per_landmark": 3,
+      "note": "HandLandmarker returns x,y,z normalised [0,1]; z is depth relative to wrist"
+    },
+    "pose_landmark_shape": {
+      "num_pose_instances": 1,
+      "landmarks_per_pose": 33,
+      "coords_per_landmark": 3,
+      "note": "PoseLandmarker (lite) returns x,y,z; world_landmarks also available with x,y,z in metres"
+    },
+    "face_landmark_shape": null
+  },
+  {
+    "video_name": "bring water for me (1).MP4",
+    "signer_id": "Signer 1",
+    "sentence": "bring water for me",
+    "resolution": "1920x1080",
+    "fps_declared": 25.0,
+    "total_frames_declared": 116,
+    "frames_read": 116,
+    "frames_left_hand": 3,
+    "frames_right_hand": 47,
+    "frames_both_hands": 0,
+    "frames_pose_detected": 116,
+    "frames_face_detected": 116,
+    "frames_missing_hands": 66,
+    "left_hand_ratio": 0.0259,
+    "right_hand_ratio": 0.4052,
+    "both_hands_ratio": 0.0,
+    "pose_ratio": 1.0,
+    "face_ratio": 1.0,
+    "missing_hands_ratio": 0.569,
+    "processing_time_sec": 16.703,
+    "hand_landmark_shape": {
+      "num_hands_in_sample": 1,
+      "landmarks_per_hand": 21,
+      "coords_per_landmark": 3,
+      "note": "HandLandmarker returns x,y,z normalised [0,1]; z is depth relative to wrist"
+    },
+    "pose_landmark_shape": {
+      "num_pose_instances": 1,
+      "landmarks_per_pose": 33,
+      "coords_per_landmark": 3,
+      "note": "PoseLandmarker (lite) returns x,y,z; world_landmarks also available with x,y,z in metres"
+    },
+    "face_landmark_shape": {
+      "landmarks_per_face": 478,
+      "coords_per_landmark": 3,
+      "note": "FaceLandmarker returns x,y,z normalised; z is depth relative to face centre"
+    }
+  },
+  {
+    "video_name": "can you repeat that please (3).MP4",
+    "signer_id": "Signer 3",
+    "sentence": "can you repeat that please",
+    "resolution": "1920x1080",
+    "fps_declared": 25.0,
+    "total_frames_declared": 109,
+    "frames_read": 109,
+    "frames_left_hand": 1,
+    "frames_right_hand": 51,
+    "frames_both_hands": 0,
+    "frames_pose_detected": 109,
+    "frames_face_detected": 109,
+    "frames_missing_hands": 57,
+    "left_hand_ratio": 0.0092,
+    "right_hand_ratio": 0.4679,
+    "both_hands_ratio": 0.0,
+    "pose_ratio": 1.0,
+    "face_ratio": 1.0,
+    "missing_hands_ratio": 0.5229,
+    "processing_time_sec": 17.085,
+    "hand_landmark_shape": {
+      "num_hands_in_sample": 1,
+      "landmarks_per_hand": 21,
+      "coords_per_landmark": 3,
+      "note": "HandLandmarker returns x,y,z normalised [0,1]; z is depth relative to wrist"
+    },
+    "pose_landmark_shape": {
+      "num_pose_instances": 1,
+      "landmarks_per_pose": 33,
+      "coords_per_landmark": 3,
+      "note": "PoseLandmarker (lite) returns x,y,z; world_landmarks also available with x,y,z in metres"
+    },
+    "face_landmark_shape": {
+      "landmarks_per_face": 478,
+      "coords_per_landmark": 3,
+      "note": "FaceLandmarker returns x,y,z normalised; z is depth relative to face centre"
+    }
+  },
+  {
+    "video_name": "are you free today.mp4",
+    "signer_id": "Signer 7",
+    "sentence": "are you free today (small)",
+    "resolution": "320x240",
+    "fps_declared": 25.0,
+    "total_frames_declared": 50,
+    "frames_read": 50,
+    "frames_left_hand": 42,
+    "frames_right_hand": 28,
+    "frames_both_hands": 23,
+    "frames_pose_detected": 50,
+    "frames_face_detected": 50,
+    "frames_missing_hands": 3,
+    "left_hand_ratio": 0.84,
+    "right_hand_ratio": 0.56,
+    "both_hands_ratio": 0.46,
+    "pose_ratio": 1.0,
+    "face_ratio": 1.0,
+    "missing_hands_ratio": 0.06,
+    "processing_time_sec": 5.111,
+    "hand_landmark_shape": {
+      "num_hands_in_sample": 1,
+      "landmarks_per_hand": 21,
+      "coords_per_landmark": 3,
+      "note": "HandLandmarker returns x,y,z normalised [0,1]; z is depth relative to wrist"
+    },
+    "pose_landmark_shape": {
+      "num_pose_instances": 1,
+      "landmarks_per_pose": 33,
+      "coords_per_landmark": 3,
+      "note": "PoseLandmarker (lite) returns x,y,z; world_landmarks also available with x,y,z in metres"
+    },
+    "face_landmark_shape": {
+      "landmarks_per_face": 478,
+      "coords_per_landmark": 3,
+      "note": "FaceLandmarker returns x,y,z normalised; z is depth relative to face centre"
+    }
+  }
+]
