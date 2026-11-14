@@ -1,7 +1,7 @@
 # SignBridge AI — Step 2.4B: Orientation Correction Report
 
-**Date:** 2026-11-14  
-**Step:** 2.4B — Camera Orientation Correction Before Full-Dataset Preprocessing  
+**Date:** 2026-11-14
+**Step:** 2.4B — Camera Orientation Correction Before Full-Dataset Preprocessing
 **Status:** ✅ PASS — Ready for full-corpus preprocessing (with restrictions documented below)
 
 ---
@@ -144,7 +144,7 @@ The rotation is applied **exactly once per frame** and **before** `cv2.cvtColor`
 
 ## 5. Empirical Validation Results
 
-Run on 4 videos into isolated directory `data/processed/orientation_eval_tensors/`.  
+Run on 4 videos into isolated directory `data/processed/orientation_eval_tensors/`.
 The five-video prototype outputs in `data/processed/isl_csltr_tensors_v1/` were **not overwritten**.
 
 > [!NOTE]
@@ -222,4 +222,3 @@ This means **only the subject's left hand** was detected across all 25 frames. T
 | `scripts/debug_shoulder_angles.py` | Created — diagnostic tool (scratch; can be deleted) |
 | `data/processed/orientation_eval_tensors/` | Created — isolated validation output (untracked) |
 | `docs/orientation-correction-report.md` | Created — this document |
-

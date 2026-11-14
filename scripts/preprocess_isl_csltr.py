@@ -603,7 +603,7 @@ def preprocess_video(
         qc_failures.append("QC-6_FAIL: Zero hand detections across entire video")
     elif max_hand_ratio < 0.20:
         qc_warnings.append(f"QC-W_LOW_HANDS: Max hand detection ratio {max_hand_ratio:.1%} < 20%")
-    
+
     if min_hand_ratio < 0.10 and max_hand_ratio >= 0.20:
         qc_warnings.append(f"QC-W_ASYM: Asymmetric/one-handed detection (L={left_ratio:.1%}, R={right_ratio:.1%})")
 
@@ -821,4 +821,3 @@ if __name__ == "__main__":
         limit=args.limit,
         overwrite=args.overwrite,
     )
-

@@ -1,8 +1,8 @@
 # SignBridge AI — Step 2.4B: Final Technical Audit of Orientation Correction
 
-**Audit Date:** 2026-11-14  
-**Audit Scope:** Technical verification of Step 2.4B Camera Orientation Correction implementation, unit tests, empirical validation, metadata integrity, and error exit codes prior to full-corpus preprocessing.  
-**Auditor:** Antigravity Agentic Audit Framework  
+**Audit Date:** 2026-11-14
+**Audit Scope:** Technical verification of Step 2.4B Camera Orientation Correction implementation, unit tests, empirical validation, metadata integrity, and error exit codes prior to full-corpus preprocessing.
+**Auditor:** Antigravity Agentic Audit Framework
 
 ---
 
@@ -152,4 +152,3 @@ When proceeding to Step 2.4C:
 2. **Quarantine Enforcement:** Ensure the 241 quarantined videos identified during the full-corpus dry run remain assigned to the `quarantine` split.
 3. **Execution Shell:** Avoid `2>&1` in PowerShell invocations to prevent `NativeCommandError` wrappers from benign TFLite stderr logs.
 4. **Test Set Isolation:** Maintain strict holdout of Signer 7 (test set) — do not inspect or evaluate test tensors during feature topology selection.
-

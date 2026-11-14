@@ -422,4 +422,3 @@ class TestOrientationCorrection:
         }
 
         assert meta["applied_rotation_deg"] == 0
-
