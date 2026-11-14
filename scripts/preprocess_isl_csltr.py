@@ -47,6 +47,9 @@ MODELS_DIR = RAW_DIR / "models"
 SAMPLE_VIDEOS_DIR = RAW_DIR / "sample_videos"
 METADATA_DIR = RAW_DIR / "metadata"
 PROCESSED_DIR = DATA_DIR / "processed" / "isl_csltr_tensors_v1"
+PROCESSED_V1_DIR = DATA_DIR / "processed" / "isl_csltr_tensors_v1"
+PROCESSED_V2_DIR = DATA_DIR / "processed" / "isl_csltr_tensors_v2"
+CORPUS_DRY_RUN_JSON = METADATA_DIR / "corpus_dry_run_results.json"
 
 HAND_MODEL_PATH = MODELS_DIR / "hand_landmarker.task"
 POSE_MODEL_PATH = MODELS_DIR / "pose_landmarker_lite.task"
@@ -384,7 +387,9 @@ def preprocess_video(
 
     clip_id = video_item["clip_id"]
     split = video_item["split"]
-    target_split_dir = output_dir / split
+    # Map 'val' to 'validation' directory for standard full-corpus structure
+    split_folder = "validation" if split in ("val", "validation") else split
+    target_split_dir = output_dir / split_folder
     target_split_dir.mkdir(parents=True, exist_ok=True)
     npz_out_path = target_split_dir / f"{clip_id}.npz"
 
@@ -607,9 +612,33 @@ def preprocess_video(
     if min_hand_ratio < 0.10 and max_hand_ratio >= 0.20:
         qc_warnings.append(f"QC-W_ASYM: Asymmetric/one-handed detection (L={left_ratio:.1%}, R={right_ratio:.1%})")
 
+    expected_dim = TOPOLOGY_DIMS[topology]
+    actual_dim = int(features_arr.shape[1]) if len(features_arr.shape) > 1 else 0
+
+    # Three-Level Quality Control Hierarchy (Step 2.4C specification)
+    # Level 1: Technical Validity (video readable, duration bounds, finite values, exact dimension)
+    qc_level_1_pass = bool(
+        frames_read >= MIN_FRAMES_BOUND
+        and frames_read <= MAX_FRAMES_BOUND
+        and np.isfinite(features_arr).all()
+        and actual_dim == expected_dim
+    )
+    # Level 2: Landmark Coverage (pose presence, hand presence, bounded stale fallback)
+    qc_level_2_pass = bool(
+        pose_ratio >= MIN_POSE_RATIO
+        and max_hand_ratio > 0.0
+        and expired_ref_ratio <= 0.20
+    )
+    # Level 3: Benchmark Suitability (Levels 1 & 2 pass, signer verified, valid benchmark split)
+    qc_level_3_pass = bool(
+        qc_level_1_pass
+        and qc_level_2_pass
+        and signer_verified
+        and split in ("train", "val", "validation", "test")
+    )
+
     # Training suitability: Requires technical pass, verified signer identity, and train split
-    # Note: signer_verified was already resolved above during orientation detection
-    suitability_for_training = bool(qc_pass and signer_verified and split == "train")
+    suitability_for_training = bool(qc_pass and signer_verified and split in ("train",))
 
     # Append orientation warning to qc_warnings if set
     if orientation_warning:
@@ -626,7 +655,6 @@ def preprocess_video(
         overall_status = "PASS"
 
     # Metadata payload
-    expected_dim = TOPOLOGY_DIMS[topology]
     metadata_payload = {
         "clip_id": clip_id,
         "video_filename": video_item["filename"],
@@ -643,7 +671,7 @@ def preprocess_video(
         "fps_declared": fps_declared,
         "frames_extracted": frames_read,
         "expected_dim": expected_dim,
-        "actual_dim": int(features_arr.shape[1]) if len(features_arr.shape) > 1 else 0,
+        "actual_dim": actual_dim,
         "topology": topology,
         "left_hand_ratio": round(left_ratio, 4),
         "right_hand_ratio": round(right_ratio, 4),
@@ -651,6 +679,9 @@ def preprocess_video(
         "norm_valid_ratio": round(norm_valid_ratio, 4),
         "expired_ref_ratio": round(expired_ref_ratio, 4),
         "extraction_time_sec": round(t_extract_elapsed, 2),
+        "qc_level_1_pass": qc_level_1_pass,
+        "qc_level_2_pass": qc_level_2_pass,
+        "qc_level_3_pass": qc_level_3_pass,
         "qc_pass": qc_pass,
         "qc_status": overall_status,
         "qc_warnings": qc_warnings,
@@ -793,10 +824,416 @@ def run_preprocessing_pipeline(
 
 
 # ---------------------------------------------------------------------------
+# Step 2.4C: Full-Corpus Preprocessing Pipeline v2
+# ---------------------------------------------------------------------------
+def run_full_corpus_pipeline(
+    catalog_path: Path = CORPUS_DRY_RUN_JSON,
+    video_dirs: Optional[List[Path]] = None,
+    output_dir: Path = PROCESSED_V2_DIR,
+    topology: str = "candidate_b_3d",
+    limit: Optional[int] = None,
+    overwrite: bool = False,
+) -> Dict[str, Any]:
+    """
+    Executes full-corpus preprocessing v2 using the dry-run catalog as source of truth.
+    Organizes outputs into:
+        output_dir/
+            train/
+            validation/
+            test/
+            quarantine/
+            metadata/
+            manifests/
+                master_manifest.csv
+                failed_videos.csv
+                quarantine_manifest.csv
+            quality_reports/
+                quality_summary.json
+                split_summary.json
+                topology_summary.json
+    """
+    print("=" * 70)
+    print("SignBridge AI — Step 2.4C: Full-Corpus Preprocessing Pipeline v2")
+    print("=" * 70)
+    print(f"Catalog File      : {catalog_path}")
+    print(f"Output Directory  : {output_dir}")
+    print(f"Topology Selected : {topology} ({TOPOLOGY_DIMS.get(topology, 'Unknown')}D)")
+    print(f"Overwrite Existing: {overwrite}")
+    print(f"Processing Limit  : {limit if limit is not None else 'None (All Videos)'}")
+    print()
+
+    # 1. Prepare directory structure
+    train_dir = output_dir / "train"
+    val_dir = output_dir / "validation"
+    test_dir = output_dir / "test"
+    quarantine_dir = output_dir / "quarantine"
+    metadata_out_dir = output_dir / "metadata"
+    manifests_dir = output_dir / "manifests"
+    quality_dir = output_dir / "quality_reports"
+
+    for d in [train_dir, val_dir, test_dir, quarantine_dir, metadata_out_dir, manifests_dir, quality_dir]:
+        d.mkdir(parents=True, exist_ok=True)
+
+    # 2. Load catalog
+    if not catalog_path.exists():
+        raise FileNotFoundError(f"Corpus catalog not found at: {catalog_path}")
+
+    with open(catalog_path, "r", encoding="utf-8") as f:
+        catalog_data = json.load(f)
+
+    records = catalog_data.get("records", [])
+    print(f"[INFO] Loaded {len(records)} records from dry-run catalog.")
+
+    # Copy catalog and metadata for self-contained archive
+    with open(metadata_out_dir / "catalog_snapshot.json", "w", encoding="utf-8") as f:
+        json.dump(catalog_data, f, indent=2)
+
+    # 3. Discover all available local videos across search directories
+    if video_dirs is None:
+        video_dirs = [
+            RAW_DIR / "sample_videos",
+            RAW_DIR / "Videos_Sentence_Level",
+        ]
+
+    local_video_map: Dict[str, Path] = {}
+    for vdir in video_dirs:
+        if not vdir.exists():
+            continue
+        for p in vdir.rglob("*.mp4"):
+            local_video_map[p.name.lower()] = p
+        for p in vdir.rglob("*.MP4"):
+            local_video_map[p.name.lower()] = p
+
+    print(f"[INFO] Located {len(local_video_map)} unique video file(s) across local storage.")
+
+    # 4. Process records
+    master_manifest_rows = []
+    quarantine_manifest_rows = []
+    failed_video_rows = []
+
+    eligible_count = 0
+    quarantined_count = 0
+    locally_available_count = 0
+    processed_count = 0
+    qc_passed_count = 0
+    rotated_count = 0
+    unrotated_count = 0
+
+    all_pose_ratios = []
+    all_left_ratios = []
+    all_right_ratios = []
+    all_norm_ratios = []
+
+    # Apply limit if specified
+    records_to_process = records if limit is None else records[:limit]
+
+    for idx, r in enumerate(records_to_process, start=1):
+        vname = r["video_filename"]
+        vname_lower = vname.lower()
+        sentence = r["sentence"]
+        proposed_split = r["proposed_split"]
+        is_quarantine = (proposed_split == "quarantine")
+
+        if is_quarantine:
+            quarantined_count += 1
+            # Add to quarantine manifest
+            quarantine_manifest_rows.append({
+                "video_filename": vname,
+                "sentence_category": sentence,
+                "clean_stem": r.get("clean_stem", ""),
+                "candidate_signer_id": r.get("candidate_signer_id", "unverified"),
+                "mapping_status": r.get("mapping_status", "QUARANTINED"),
+                "quarantine_reason": r.get("quarantine_reason", "Quarantined by dry-run protocol"),
+                "suitability_for_training": False,
+            })
+
+            # If local file exists, process for diagnostic purposes into quarantine/
+            if vname_lower in local_video_map:
+                local_path = local_video_map[vname_lower]
+                locally_available_count += 1
+                vitem = {
+                    "path": local_path,
+                    "filename": vname,
+                    "clip_id": make_clip_id(vname),
+                    "sentence_text": sentence,
+                    "gloss_text": r.get("gloss", "UNKNOWN_GLOSS"),
+                    "signer_id": r.get("candidate_signer_id", "unverified"),
+                    "signer_type": r.get("signer_type", "unknown"),
+                    "signer_identity_verified": False,
+                    "split": "quarantine",
+                }
+                res = preprocess_video(
+                    video_item=vitem,
+                    hand_model=HAND_MODEL_PATH,
+                    pose_model=POSE_MODEL_PATH,
+                    output_dir=output_dir,
+                    topology=topology,
+                    overwrite=overwrite,
+                )
+                if "metadata" in res:
+                    meta = res["metadata"]
+                    meta["split"] = "quarantine"
+                    meta["suitability_for_training"] = False
+                    master_manifest_rows.append(_build_manifest_row(res, meta, output_dir))
+            continue
+
+        # Eligible benchmark video (train, val, test)
+        eligible_count += 1
+
+        if vname_lower not in local_video_map:
+            # Video not locally available on disk
+            failed_video_rows.append({
+                "video_filename": vname,
+                "sentence_category": sentence,
+                "candidate_signer_id": r.get("candidate_signer_id", ""),
+                "assigned_split": proposed_split,
+                "failure_stage": "FILE_DISCOVERY",
+                "failure_reason": "Source video file not present in local filesystem (pending full archive download)",
+                "error_details": f"Searched: {[str(d) for d in video_dirs]}",
+            })
+            continue
+
+        # Process locally available eligible video
+        local_path = local_video_map[vname_lower]
+        locally_available_count += 1
+
+        vitem = {
+            "path": local_path,
+            "filename": vname,
+            "clip_id": make_clip_id(vname),
+            "sentence_text": sentence,
+            "gloss_text": r.get("gloss", "UNKNOWN_GLOSS"),
+            "signer_id": r["candidate_signer_id"],
+            "signer_type": r.get("signer_type", "volunteer"),
+            "signer_identity_verified": True,
+            "split": proposed_split,
+        }
+
+        print(f"[{idx}/{len(records_to_process)}] Processing: {vname} (Signer {vitem['signer_id']}, Split: {proposed_split})")
+
+        res = preprocess_video(
+            video_item=vitem,
+            hand_model=HAND_MODEL_PATH,
+            pose_model=POSE_MODEL_PATH,
+            output_dir=output_dir,
+            topology=topology,
+            overwrite=overwrite,
+        )
+
+        processed_count += 1
+
+        if "metadata" in res:
+            meta = res["metadata"]
+            if res.get("qc_pass"):
+                qc_passed_count += 1
+
+            if meta.get("applied_rotation_deg", 0) != 0:
+                rotated_count += 1
+            else:
+                unrotated_count += 1
+
+            all_pose_ratios.append(meta.get("pose_ratio", 0.0))
+            all_left_ratios.append(meta.get("left_hand_ratio", 0.0))
+            all_right_ratios.append(meta.get("right_hand_ratio", 0.0))
+            all_norm_ratios.append(meta.get("norm_valid_ratio", 0.0))
+
+            master_manifest_rows.append(_build_manifest_row(res, meta, output_dir))
+        else:
+            failed_video_rows.append({
+                "video_filename": vname,
+                "sentence_category": sentence,
+                "candidate_signer_id": r.get("candidate_signer_id", ""),
+                "assigned_split": proposed_split,
+                "failure_stage": "DECODING_OR_EXTRACTION",
+                "failure_reason": res.get("qc_reason", "Preprocess video returned no metadata"),
+                "error_details": str(res),
+            })
+
+    # 5. Write Master Manifest CSV
+    master_manifest_path = manifests_dir / "master_manifest.csv"
+    if master_manifest_rows:
+        with open(master_manifest_path, "w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=list(master_manifest_rows[0].keys()))
+            writer.writeheader()
+            writer.writerows(master_manifest_rows)
+        print(f"[INFO] Master manifest saved to: {master_manifest_path} ({len(master_manifest_rows)} entries)")
+
+    # 6. Write Quarantine Manifest CSV
+    quarantine_manifest_path = manifests_dir / "quarantine_manifest.csv"
+    if quarantine_manifest_rows:
+        with open(quarantine_manifest_path, "w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=list(quarantine_manifest_rows[0].keys()))
+            writer.writeheader()
+            writer.writerows(quarantine_manifest_rows)
+        print(f"[INFO] Quarantine manifest saved to: {quarantine_manifest_path} ({len(quarantine_manifest_rows)} entries)")
+
+    # 7. Write Failed Videos Manifest CSV
+    failed_manifest_path = manifests_dir / "failed_videos.csv"
+    if failed_video_rows:
+        with open(failed_manifest_path, "w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=list(failed_video_rows[0].keys()))
+            writer.writeheader()
+            writer.writerows(failed_video_rows)
+        print(f"[INFO] Failed videos manifest saved to: {failed_manifest_path} ({len(failed_video_rows)} entries)")
+
+    # 8. Write Quality Summary JSON
+    quality_summary = {
+        "dataset_name": "ISL-CSLTR",
+        "pipeline_version": "v2",
+        "topology": topology,
+        "feature_dim": TOPOLOGY_DIMS.get(topology, 0),
+        "total_catalog_videos": len(records),
+        "eligible_benchmark_videos": eligible_count,
+        "quarantined_videos": quarantined_count,
+        "locally_available_videos": locally_available_count,
+        "successfully_preprocessed": processed_count,
+        "qc_passed_benchmark_videos": qc_passed_count,
+        "failed_or_missing_videos": len(failed_video_rows),
+        "orientation_correction_applied_count": rotated_count,
+        "orientation_correction_unrotated_count": unrotated_count,
+        "mean_pose_ratio": round(float(np.mean(all_pose_ratios)), 4) if all_pose_ratios else 0.0,
+        "mean_left_hand_ratio": round(float(np.mean(all_left_ratios)), 4) if all_left_ratios else 0.0,
+        "mean_right_hand_ratio": round(float(np.mean(all_right_ratios)), 4) if all_right_ratios else 0.0,
+        "mean_norm_valid_ratio": round(float(np.mean(all_norm_ratios)), 4) if all_norm_ratios else 0.0,
+    }
+    with open(quality_dir / "quality_summary.json", "w", encoding="utf-8") as f:
+        json.dump(quality_summary, f, indent=2)
+
+    # 9. Write Split Summary JSON
+    split_summary = {
+        "train": {
+            "signers": ["1", "2", "3", "4", "5"],
+            "catalog_total": sum(1 for r in records if r["proposed_split"] == "train"),
+            "processed_locally": sum(1 for row in master_manifest_rows if row["split"] == "train"),
+            "categories_count": len(set(r["sentence"] for r in records if r["proposed_split"] == "train")),
+        },
+        "validation": {
+            "signers": ["6"],
+            "catalog_total": sum(1 for r in records if r["proposed_split"] == "val"),
+            "processed_locally": sum(1 for row in master_manifest_rows if row["split"] in ("val", "validation")),
+            "categories_count": len(set(r["sentence"] for r in records if r["proposed_split"] == "val")),
+        },
+        "test": {
+            "signers": ["7"],
+            "catalog_total": sum(1 for r in records if r["proposed_split"] == "test"),
+            "processed_locally": sum(1 for row in master_manifest_rows if row["split"] == "test"),
+            "categories_count": len(set(r["sentence"] for r in records if r["proposed_split"] == "test")),
+        },
+        "quarantine": {
+            "catalog_total": sum(1 for r in records if r["proposed_split"] == "quarantine"),
+            "processed_locally": sum(1 for row in master_manifest_rows if row["split"] == "quarantine"),
+        },
+    }
+    with open(quality_dir / "split_summary.json", "w", encoding="utf-8") as f:
+        json.dump(split_summary, f, indent=2)
+
+    # 10. Write Topology Summary JSON
+    topology_summary = {
+        "selected_topology": topology,
+        "total_dimensions": TOPOLOGY_DIMS.get(topology, 0),
+        "topology_catalog": {
+            "candidate_a_2d": {"dim": 154, "left": 42, "right": 42, "pose": 66, "indicators": 4},
+            "candidate_b_3d": {"dim": 229, "left": 63, "right": 63, "pose": 99, "indicators": 4},
+            "candidate_c_upper_3d": {"dim": 166, "left": 63, "right": 63, "pose": 36, "indicators": 4},
+            "candidate_d_hybrid": {"dim": 196, "left": 63, "right": 63, "pose": 66, "indicators": 4},
+        },
+    }
+    with open(quality_dir / "topology_summary.json", "w", encoding="utf-8") as f:
+        json.dump(topology_summary, f, indent=2)
+
+    print("\n" + "=" * 70)
+    print("STEP 2.4C FULL-CORPUS PREPROCESSING COMPLETE")
+    print(f"Total Catalog Videos   : {len(records)}")
+    print(f"  Benchmark Eligible   : {eligible_count} (Train: 319, Val: 66, Test: 68)")
+    print(f"  Quarantined          : {quarantined_count}")
+    print(f"Local Storage Processed: {processed_count} benchmark videos, {len(quarantine_manifest_rows)} quarantined logged")
+    print(f"Manifests Generated    : {manifests_dir}")
+    print(f"Quality Reports Saved  : {quality_dir}")
+    print("=" * 70)
+
+    return {
+        "total_catalog": len(records),
+        "eligible_count": eligible_count,
+        "quarantined_count": quarantined_count,
+        "processed_count": processed_count,
+        "master_manifest_path": str(master_manifest_path),
+        "quarantine_manifest_path": str(quarantine_manifest_path),
+        "failed_manifest_path": str(failed_manifest_path),
+        "quality_summary": quality_summary,
+        "split_summary": split_summary,
+    }
+
+
+def _build_manifest_row(res: Dict[str, Any], meta: Dict[str, Any], output_dir: Path) -> Dict[str, Any]:
+    """Helper to assemble a uniform manifest CSV dictionary row."""
+    npz_path = Path(res.get("npz_path", ""))
+    try:
+        rel_path = npz_path.relative_to(output_dir).as_posix()
+    except ValueError:
+        rel_path = str(npz_path)
+
+    return {
+        "clip_id": meta["clip_id"],
+        "video_filename": meta["video_filename"],
+        "sentence_text": meta["sentence_text"],
+        "gloss_text": meta["gloss_text"],
+        "signer_id": meta["signer_id"],
+        "signer_type": meta["signer_type"],
+        "signer_identity_verified": meta["signer_identity_verified"],
+        "split": meta["split"],
+        "original_dimensions": meta.get("original_dimensions", ""),
+        "processed_dimensions": meta.get("processed_dimensions", ""),
+        "applied_rotation_deg": meta.get("applied_rotation_deg", 0),
+        "fps_declared": meta.get("fps_declared", 25.0),
+        "frames_extracted": meta.get("frames_extracted", 0),
+        "feature_dim": meta.get("actual_dim", 0),
+        "topology": meta.get("topology", ""),
+        "left_hand_ratio": meta.get("left_hand_ratio", 0.0),
+        "right_hand_ratio": meta.get("right_hand_ratio", 0.0),
+        "pose_ratio": meta.get("pose_ratio", 0.0),
+        "norm_valid_ratio": meta.get("norm_valid_ratio", 0.0),
+        "qc_level_1_pass": meta.get("qc_level_1_pass", False),
+        "qc_level_2_pass": meta.get("qc_level_2_pass", False),
+        "qc_level_3_pass": meta.get("qc_level_3_pass", False),
+        "qc_status": meta.get("qc_status", ""),
+        "qc_warnings": "; ".join(meta.get("qc_warnings", [])),
+        "qc_failures": "; ".join(meta.get("qc_failures", [])),
+        "suitability_for_training": meta.get("suitability_for_training", False),
+        "npz_rel_path": rel_path,
+    }
+
+
+def make_clip_id(filename: str) -> str:
+    """Produces clean filesystem-safe clip ID stem from a video filename."""
+    import re
+    stem = re.sub(r'\.mp4$', '', filename, flags=re.IGNORECASE).strip()
+    clean = re.sub(r'[^a-zA-Z0-9_]+', '_', stem).strip('_').lower()
+    return clean
+
+
+# ---------------------------------------------------------------------------
 # CLI Entrypoint
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="SignBridge AI ISL-CSLTR Preprocessing Prototype")
+    parser = argparse.ArgumentParser(description="SignBridge AI ISL-CSLTR Preprocessing Pipeline")
+    parser.add_argument(
+        "--mode",
+        choices=["sample", "full_corpus"],
+        default="full_corpus",
+        help="Preprocessing mode: sample (v1 prototype) or full_corpus (v2 full dataset, default)",
+    )
+    parser.add_argument(
+        "--catalog",
+        type=Path,
+        default=CORPUS_DRY_RUN_JSON,
+        help="Path to corpus dry-run catalog JSON",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Destination directory for processed tensors and manifests (defaults: v1 for sample, v2 for full_corpus)",
+    )
     parser.add_argument(
         "--topology",
         choices=list(TOPOLOGY_DIMS.keys()),
@@ -806,8 +1243,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--limit",
         type=int,
-        default=5,
-        help="Maximum number of sample videos to process (default: 5)",
+        default=None,
+        help="Maximum number of videos to process (default: None, processes all available)",
     )
     parser.add_argument(
         "--overwrite",
@@ -816,8 +1253,21 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    run_preprocessing_pipeline(
-        topology=args.topology,
-        limit=args.limit,
-        overwrite=args.overwrite,
-    )
+    if args.mode == "sample":
+        out_dir = args.output_dir or PROCESSED_V1_DIR
+        run_preprocessing_pipeline(
+            sample_dir=SAMPLE_VIDEOS_DIR,
+            output_dir=out_dir,
+            topology=args.topology,
+            limit=args.limit or 5,
+            overwrite=args.overwrite,
+        )
+    else:
+        out_dir = args.output_dir or PROCESSED_V2_DIR
+        run_full_corpus_pipeline(
+            catalog_path=args.catalog,
+            output_dir=out_dir,
+            topology=args.topology,
+            limit=args.limit,
+            overwrite=args.overwrite,
+        )

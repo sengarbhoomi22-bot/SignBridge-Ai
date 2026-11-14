@@ -8,6 +8,7 @@ Tests:
 - Presence and normalization indicator decoupling.
 - Orientation correction logic (Step 2.4B): rotation gating, metadata recording,
   dimension swapping, and correct application count.
+- Filename stem extraction (Step 2.4B / 2.4C): regex fix for MVI_ camera IDs.
 """
 
 import math
@@ -422,3 +423,249 @@ class TestOrientationCorrection:
         }
 
         assert meta["applied_rotation_deg"] == 0
+
+
+# =============================================================================
+# Filename Stem Extraction Tests (Step 2.4B / 2.4C — MVI regex fix)
+# =============================================================================
+
+class TestFilenameStemExtraction:
+    """
+    Tests for extract_frame_stem() and clean_stem() in
+    scripts/inspect_full_corpus_dry_run.py.
+
+    Before the fix, ``re.sub(r'_\\d+$', '', p)`` stripped '_6209' from 'MVI_6209',
+    causing all 47 MVI-prefixed videos to fail stem matching and be quarantined.
+    After the fix, only whitespace-separated trailing digit runs are stripped so
+    underscore-separated camera IDs (e.g. '_6209') are preserved.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _import(self):
+        from inspect_full_corpus_dry_run import extract_frame_stem, clean_stem
+        self.extract_frame_stem = extract_frame_stem
+        self.clean_stem = clean_stem
+
+    # ------------------------------------------------------------------
+    # extract_frame_stem: MVI camera-ID preservation (the fixed defect)
+    # ------------------------------------------------------------------
+
+    def test_mvi_6209_frame_stem_preserved(self):
+        """MVI_6209 camera ID must NOT be stripped; stem must be 'mvi_6209'."""
+        assert self.extract_frame_stem("MVI_6209 01.jpg") == "mvi_6209"
+
+    def test_mvi_6208_frame_stem_preserved(self):
+        """MVI_6208 camera ID must NOT be stripped; stem must be 'mvi_6208'."""
+        assert self.extract_frame_stem("MVI_6208 01.jpg") == "mvi_6208"
+
+    def test_mvi_high_frame_number_preserved(self):
+        """Two-digit frame index (e.g. ' 22') must be stripped; camera ID must remain."""
+        assert self.extract_frame_stem("MVI_6209 22.jpg") == "mvi_6209"
+
+    # ------------------------------------------------------------------
+    # extract_frame_stem: standard sentence-level naming
+    # ------------------------------------------------------------------
+
+    def test_simple_sentence_frame_stem(self):
+        """Plain sentence video frames strip trailing whitespace+digits only."""
+        assert self.extract_frame_stem("are you free today 01.jpg") == "are you free today"
+
+    def test_parenthesised_take_frame_stem(self):
+        """Frames with (N) take suffix in stem preserve the take suffix."""
+        assert self.extract_frame_stem("are you free today (2) 01.jpg") == "are you free today (2)"
+
+    def test_free_take_2_frame_stem(self):
+        """'free (2)' stem is preserved; trailing frame index stripped."""
+        assert self.extract_frame_stem("free (2) 01.jpg") == "free (2)"
+
+    def test_case_insensitive_jpg_extension(self):
+        """'.JPG' extension (uppercase) must also be stripped."""
+        assert self.extract_frame_stem("MVI_6209 01.JPG") == "mvi_6209"
+
+    def test_output_is_lowercase(self):
+        """extract_frame_stem must always return a lowercase string."""
+        assert self.extract_frame_stem("Are You Free Today 01.jpg") == "are you free today"
+
+    # ------------------------------------------------------------------
+    # clean_stem: video filename normalisation
+    # ------------------------------------------------------------------
+
+    def test_clean_stem_mvi_6209(self):
+        """clean_stem on video filename preserves underscore-delimited camera ID."""
+        assert self.clean_stem("MVI_6209.MP4") == "mvi_6209"
+
+    def test_clean_stem_free_2(self):
+        """clean_stem on 'free (2).MP4' returns 'free (2)'."""
+        assert self.clean_stem("free (2).MP4") == "free (2)"
+
+    def test_clean_stem_plain_sentence(self):
+        """clean_stem on plain sentence video returns lowercase stem."""
+        assert self.clean_stem("are you free today.mp4") == "are you free today"
+
+    def test_clean_stem_case_insensitive_extension(self):
+        """clean_stem strips .mp4 and .MP4 identically."""
+        assert self.clean_stem("MVI_6209.MP4") == self.clean_stem("MVI_6209.mp4")
+
+    # ------------------------------------------------------------------
+    # Consistency: video stem must match frame stem for Tier A samples
+    # ------------------------------------------------------------------
+
+    def test_tier_a_mvi_6209_stem_match(self):
+        """Video stem for MVI_6209.MP4 must match frame stem for MVI_6209 01.jpg."""
+        video_stem = self.clean_stem("MVI_6209.MP4")
+        frame_stem = self.extract_frame_stem("MVI_6209 01.jpg")
+        assert video_stem == frame_stem, (
+            f"Stem mismatch: video={video_stem!r}, frame={frame_stem!r}"
+        )
+
+    def test_tier_a_are_you_free_today_stem_match(self):
+        """Video stem for 'are you free today.mp4' must match frame stem."""
+        video_stem = self.clean_stem("are you free today.mp4")
+        frame_stem = self.extract_frame_stem("are you free today 01.jpg")
+        assert video_stem == frame_stem
+
+    def test_tier_a_free_2_stem_match(self):
+        """Video stem for 'free (2).MP4' must match frame stem."""
+        video_stem = self.clean_stem("free (2).MP4")
+        frame_stem = self.extract_frame_stem("free (2) 01.jpg")
+        assert video_stem == frame_stem
+
+    def test_tier_a_are_you_free_today_2_stem_match(self):
+        """Video stem for 'are you free today (2).mp4' must match frame stem."""
+        video_stem = self.clean_stem("are you free today (2).mp4")
+        frame_stem = self.extract_frame_stem("are you free today (2) 01.jpg")
+        assert video_stem == frame_stem
+
+
+# =============================================================================
+# Step 2.4C: Full-Corpus Preprocessing v2 Pipeline Integrity Tests
+# =============================================================================
+
+class TestV2PipelineIntegrity:
+    """
+    Validation suite for full-corpus preprocessing v2 manifests,
+    accounting invariants, tensor dimensionalities, and split isolation.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _setup(self):
+        self.v2_dir = PROJECT_ROOT / "data" / "processed" / "isl_csltr_tensors_v2"
+        self.catalog_path = PROJECT_ROOT / "data" / "raw" / "isl-csltr" / "metadata" / "corpus_dry_run_results.json"
+
+    def test_v2_output_directory_structure(self):
+        """Verify that isl_csltr_tensors_v2 directory contains all required subdirectories."""
+        if not self.v2_dir.exists():
+            pytest.skip("v2 processed directory not yet generated")
+
+        required_subdirs = ["train", "validation", "test", "quarantine", "metadata", "manifests", "quality_reports"]
+        for sub in required_subdirs:
+            assert (self.v2_dir / sub).exists(), f"Missing required v2 directory: {sub}"
+
+    def test_v2_manifests_exist_and_conform(self):
+        """Verify that master, quarantine, and failed manifests exist with expected header columns."""
+        if not self.v2_dir.exists():
+            pytest.skip("v2 processed directory not yet generated")
+
+        import csv
+        master_path = self.v2_dir / "manifests" / "master_manifest.csv"
+        quarantine_path = self.v2_dir / "manifests" / "quarantine_manifest.csv"
+        failed_path = self.v2_dir / "manifests" / "failed_videos.csv"
+
+        assert master_path.exists(), "master_manifest.csv missing"
+        assert quarantine_path.exists(), "quarantine_manifest.csv missing"
+        assert failed_path.exists(), "failed_videos.csv missing"
+
+        with open(master_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            headers = set(reader.fieldnames or [])
+            assert "clip_id" in headers
+            assert "feature_dim" in headers
+            assert "applied_rotation_deg" in headers
+            assert "qc_level_1_pass" in headers
+            assert "qc_level_2_pass" in headers
+            assert "qc_level_3_pass" in headers
+            assert "suitability_for_training" in headers
+
+    def test_v2_accounting_invariants(self):
+        """Verify 453 eligible benchmark + 234 quarantined = 687 total corpus invariant."""
+        import json
+        if not self.catalog_path.exists():
+            pytest.skip("Dry run catalog not found")
+
+        with open(self.catalog_path, "r", encoding="utf-8") as f:
+            catalog = json.load(f)
+
+        records = catalog["records"]
+        assert len(records) == 687, f"Total records must be 687, got {len(records)}"
+
+        train_cnt = sum(1 for r in records if r["proposed_split"] == "train")
+        val_cnt = sum(1 for r in records if r["proposed_split"] == "val")
+        test_cnt = sum(1 for r in records if r["proposed_split"] == "test")
+        quarantine_cnt = sum(1 for r in records if r["proposed_split"] == "quarantine")
+
+        assert train_cnt == 319, f"Expected 319 train videos, got {train_cnt}"
+        assert val_cnt == 66, f"Expected 66 val videos, got {val_cnt}"
+        assert test_cnt == 68, f"Expected 68 test videos, got {test_cnt}"
+        assert quarantine_cnt == 234, f"Expected 234 quarantined videos, got {quarantine_cnt}"
+        assert (train_cnt + val_cnt + test_cnt) == 453, "Benchmark total must be 453"
+        assert (453 + quarantine_cnt) == 687, "Corpus sum must be 687"
+
+    def test_v2_signer_7_strictly_isolated_to_test(self):
+        """Verify that Signer 7 videos appear exclusively in the test split."""
+        import json
+        if not self.catalog_path.exists():
+            pytest.skip("Dry run catalog not found")
+
+        with open(self.catalog_path, "r", encoding="utf-8") as f:
+            catalog = json.load(f)
+
+        records = catalog["records"]
+        for r in records:
+            if r.get("candidate_signer_id") == "7":
+                assert r["proposed_split"] == "test", (
+                    f"Signer 7 video {r['video_filename']} leaked into {r['proposed_split']}!"
+                )
+
+    def test_v2_quarantined_suitability_is_always_false(self):
+        """Verify that every quarantined video has suitability_for_training == False."""
+        if not self.v2_dir.exists():
+            pytest.skip("v2 processed directory not yet generated")
+
+        import csv
+        quarantine_path = self.v2_dir / "manifests" / "quarantine_manifest.csv"
+        with open(quarantine_path, "r", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                assert row["suitability_for_training"] in ("False", "false", False), (
+                    f"Quarantined video {row['video_filename']} marked suitable for training!"
+                )
+
+    def test_v2_physical_npz_finite_values_and_dimensions(self):
+        """Verify all generated physical NPZ feature tensors have finite values and exact dimensions."""
+        if not self.v2_dir.exists():
+            pytest.skip("v2 processed directory not yet generated")
+
+        import csv
+        master_path = self.v2_dir / "manifests" / "master_manifest.csv"
+        with open(master_path, "r", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                npz_rel = row["npz_rel_path"]
+                npz_full = self.v2_dir / npz_rel
+                assert npz_full.exists(), f"Missing physical tensor: {npz_rel}"
+
+                data = np.load(npz_full)
+                features = data["features"]
+                mask = data["presence_mask"]
+
+                assert features.ndim == 2
+                assert features.shape[1] == 229, f"Feature dimension mismatch in {npz_rel}: {features.shape}"
+                assert mask.shape == (features.shape[0], 4)
+                assert np.isfinite(features).all(), f"NaN or Inf in {npz_rel}!"
+                assert np.isfinite(mask).all(), f"NaN or Inf in mask of {npz_rel}!"
+
+    def test_make_clip_id_deterministic(self):
+        """Verify make_clip_id helper generates consistent, filesystem-safe strings."""
+        from preprocess_isl_csltr import make_clip_id
+        assert make_clip_id("are you free today (2).mp4") == "are_you_free_today_2"
+        assert make_clip_id("free (2).MP4") == "free_2"
+        assert make_clip_id("MVI_6209.MP4") == "mvi_6209"
+        assert make_clip_id("bring water for me (1).mp4") == "bring_water_for_me_1"
