@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ivory: #FAF5EF;
+  --coral: #6D263D;
+  --amber: #D6AD70;
+  --cobalt: #C97861;
+  --rose: #6D263D;
+  --midnight: #3B292B;
+  --border: #E9DCD2;
+}
+
+html {
+  background-color: var(--ivory);
+  color: var(--midnight);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+*:focus-visible {
+  outline: 2.5px solid var(--coral);
+  outline-offset: 3px;
+}
+
+/* 3D Split-Letter Kinetic Typography */
+.kinetic-heading {
+  perspective: 1200px;
+}
+
+.k-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+
+.k-word {
+  display: inline-block;
+  white-space: nowrap;
+  margin-right: 0.24em;
+}
+
+.k-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(112%) rotateX(-70deg) translateZ(-28px);
+  transform-origin: bottom center;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.k-visible .k-char {
+  opacity: 1;
+  transform: translateY(0%) rotateX(0deg) translateZ(0px);
+}
+
+/* Animated SVG Stroke & Wave Motion */
+@keyframes dashFlow {
+  to { stroke-dashoffset: -120; }
+}
+
+.svg-flow-line {
+  stroke-dasharray: 8 8;
+  animation: dashFlow 5s linear infinite;
+}
+
+@keyframes pulseNode {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.24); opacity: 1; }
+}
+
+.svg-pulse-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulseNode 3.2s ease-in-out infinite;
+}
+
+@keyframes waveBar {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+.svg-wave-bar {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: waveBar 1.4s ease-in-out infinite;
+}
+
+/* Subtle Paper Grain Overlay */
+.editorial-grain {
+  background-image: radial-gradient(rgba(59, 41, 43, 0.06) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+#webgl-stage {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .k-char {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .svg-flow-line,
+  .svg-pulse-node,
+  .svg-wave-bar {
+    animation: none !important;
+  }
+  html {
+    scroll-behavior: auto !important;
+  }
+}
+

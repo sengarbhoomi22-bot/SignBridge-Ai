@@ -1,0 +1,179 @@
+// SignBridge AI - Design Tokens & Reference Data (Warm Ivory & Rich Burgundy Edition)
+
+export const STAGE_CAPTIONS = [
+  '<strong>Act I · Spatial Gesture:</strong> Organic silk ribbons capture continuous hand trajectory, posture, and expression across space.',
+  '<strong>Act II · Temporal Understanding:</strong> Multi-frame landmarks align into structured semantic intent—abstaining honestly if uncertain.',
+  '<strong>Act III · Editable Text:</strong> The signer reviews and refines the translated English or Hindi sentence before playback.',
+  '<strong>Act IV · Confirmed Speech:</strong> Harmonic voice synthesis plays aloud only after explicit user confirmation.',
+];
+
+export const WORKFLOW_DATA = [
+  {
+    num: '01',
+    title: 'Choose a communication context',
+    desc: 'Select one of seven everyday or service settings—such as Healthcare, Education, or Everyday Conversations—to organize relevant vocabulary labels.',
+    badge: 'Step 01 · Context Setup',
+    safeguard: 'Organizes UI cues without forcing predictions',
+    icon: 'Compass',
+    stageMap: 0,
+  },
+  {
+    num: '02',
+    title: 'Allow camera access',
+    desc: 'Camera permission is requested strictly on demand when you begin capture, accompanied by clear framing guidance and a visible recording indicator.',
+    badge: 'Step 02 · Explicit Consent',
+    safeguard: 'Requested only on user action; never silently on load',
+    icon: 'Camera',
+    stageMap: 0,
+  },
+  {
+    num: '03',
+    title: 'Sign naturally in front of the camera',
+    desc: 'Perform supported Indian Sign Language sequences at a natural conversational pace—capturing motion across frames rather than single static poses.',
+    badge: 'Step 03 · Temporal Input',
+    safeguard: 'Captures continuous hand & upper-body motion',
+    icon: 'Hand',
+    stageMap: 0,
+  },
+  {
+    num: '04',
+    title: 'AI analyses supported signing sequences',
+    desc: 'Visual landmarks are evaluated across time. If framing or confidence is insufficient, SignBridge AI honestly requests another attempt instead of guessing.',
+    badge: 'Step 04 · Honest Inference',
+    safeguard: 'Abstains transparently on low confidence',
+    icon: 'Cpu',
+    stageMap: 1,
+  },
+  {
+    num: '05',
+    title: 'Review and edit the translated sentence',
+    desc: 'Nothing is spoken automatically. Inspect the generated sentence and refine any word before proceeding.',
+    badge: 'Step 05 · Human-in-the-Loop',
+    safeguard: 'Mandatory human review prevents miscommunication',
+    icon: 'Edit3',
+    stageMap: 2,
+  },
+  {
+    num: '06',
+    title: 'Choose English or Hindi',
+    desc: 'Keep your reviewed English text or generate Hindi output through a dedicated, separately evaluated translation stage.',
+    badge: 'Step 06 · Bilingual Output',
+    safeguard: 'Explicit language choice prior to audio synthesis',
+    icon: 'Languages',
+    stageMap: 2,
+  },
+  {
+    num: '07',
+    title: 'Confirm and play the speech output',
+    desc: 'Only after your explicit confirmation does SignBridge AI synthesize spoken voice in English or Hindi—or let you copy the text.',
+    badge: 'Step 07 · Confirmed Speech',
+    safeguard: 'Zero unconfirmed speech playback',
+    icon: 'Volume2',
+    stageMap: 3,
+  },
+];
+
+export const DOMAIN_WORLDS = [
+  {
+    name: 'Education',
+    tag: 'Classroom & Learning Support',
+    accentHex: '#6D263D',
+    badgeBg: 'bg-coral',
+    emblemBg: 'bg-coral/12 border-coral/30 text-coral',
+    desc: 'Supports classroom questions, assignment explanations, attendance interactions, and learning assistance between deaf students and educators.',
+    example: '“Could you please repeat that explanation once more?”',
+    icon: 'GraduationCap',
+  },
+  {
+    name: 'Healthcare',
+    tag: 'Clinical & Triage Assistance',
+    accentHex: '#C97861',
+    badgeBg: 'bg-slatecobalt',
+    emblemBg: 'bg-slatecobalt/15 border-slatecobalt/30 text-slatecobalt',
+    desc: 'Assists patients and care staff in communicating basic symptoms, appointment check-ins, and immediate support requests.',
+    example: '“I have an appointment and need assistance at registration.”',
+    icon: 'HeartPulse',
+  },
+  {
+    name: 'Banking',
+    tag: 'Service Counter Navigation',
+    accentHex: '#D6AD70',
+    badgeBg: 'bg-amber text-midnight',
+    emblemBg: 'bg-amber/20 border-amber/40 text-midnight',
+    desc: 'Facilitates common counter enquiries, account service navigation, and everyday transaction assistance.',
+    example: '“I would like help with my account enquiry today.”',
+    icon: 'Landmark',
+  },
+  {
+    name: 'Workplaces',
+    tag: 'Team Coordination & Inclusion',
+    accentHex: '#3B292B',
+    badgeBg: 'bg-midnight',
+    emblemBg: 'bg-midnight/12 border-midnight/25 text-midnight',
+    desc: 'Supports workplace introductions, task coordination, meeting check-ins, and routine colleague collaboration.',
+    example: '“Let us review the project schedule together.”',
+    icon: 'Briefcase',
+  },
+  {
+    name: 'Travel',
+    tag: 'Transit & Directions',
+    accentHex: '#6D263D',
+    badgeBg: 'bg-coral',
+    emblemBg: 'bg-coral/12 border-coral/30 text-coral',
+    desc: 'Helps travellers ask for platform details, tickets, transport guidance, and accommodation directions.',
+    example: '“Excuse me, which platform does this train depart from?”',
+    icon: 'TrainFront',
+  },
+  {
+    name: 'Government & Public Services',
+    tag: 'Civic Desk & Form Enquiries',
+    accentHex: '#C97861',
+    badgeBg: 'bg-slatecobalt',
+    emblemBg: 'bg-slatecobalt/15 border-slatecobalt/30 text-slatecobalt',
+    desc: 'Assists citizens at public offices with form guidance, document counter enquiries, and appointment verification.',
+    example: '“Where should I submit this completed application form?”',
+    icon: 'Building2',
+  },
+  {
+    name: 'Everyday Conversations',
+    tag: 'Daily Social Connection',
+    accentHex: '#D6AD70',
+    badgeBg: 'bg-amber text-midnight',
+    emblemBg: 'bg-amber/20 border-amber/40 text-midnight',
+    desc: 'Enables natural greetings, family conversations, time references, personal preferences, and daily social exchanges.',
+    example: '“Hello, nice to meet you. How are you today?”',
+    icon: 'MessageCircleHeart',
+  },
+];
+
+export const CONTEXT_SAMPLES = {
+  'Everyday Conversations': {
+    'en-IN': 'Hello, nice to meet you. How can I help today?',
+    'hi-IN': 'नमस्ते, आपसे मिलकर अच्छा लगा। आज मैं क्या मदद कर सकता हूँ?',
+  },
+  Education: {
+    'en-IN': 'Could you please repeat that explanation once more?',
+    'hi-IN': 'क्या आप कृपया उस व्याख्या को एक बार फिर दोहरा सकते हैं?',
+  },
+  Healthcare: {
+    'en-IN': 'I have an appointment and need assistance at registration.',
+    'hi-IN': 'मेरा अपॉइंटमेंट है और मुझे पंजीकरण में सहायता चाहिए।',
+  },
+  Banking: {
+    'en-IN': 'I would like help with my account enquiry today.',
+    'hi-IN': 'मुझे आज अपने खाते की जानकारी के लिए सहायता चाहिए।',
+  },
+  Workplaces: {
+    'en-IN': 'Let us review the project schedule together.',
+    'hi-IN': 'आइए हम सब मिलकर प्रोजेक्ट की समय-सीमा की समीक्षा करें।',
+  },
+  Travel: {
+    'en-IN': 'Excuse me, which platform does this train depart from?',
+    'hi-IN': 'क्षमा करें, यह ट्रेन किस प्लेटफॉर्म से रवाना होती है?',
+  },
+  'Government & Public Services': {
+    'en-IN': 'Where should I submit this completed application form?',
+    'hi-IN': 'मुझे यह भरा हुआ आवेदन पत्र कहाँ जमा करना है?',
+  },
+};
+

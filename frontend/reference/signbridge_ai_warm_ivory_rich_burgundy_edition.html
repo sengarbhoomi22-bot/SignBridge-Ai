@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SignBridge AI — Beyond Words. Beyond Barriers.</title>
+  <!-- Editorial & Technical Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ivory: '#FAF5EF',
+            coral: '#6D263D',
+            amber: '#D6AD70',
+            slatecobalt: '#C97861',
+            rose: '#6D263D',
+            midnight: '#3B292B',
+            subtleborder: '#E9DCD2',
+          },
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          boxShadow: {
+            editorial: '0 24px 60px -15px rgba(59, 41, 43, 0.14)',
+            editorialLg: '0 32px 80px -20px rgba(59, 41, 43, 0.22)',
+            pill: '0 10px 30px -8px rgba(59, 41, 43, 0.15)',
+          },
+        },
+      },
+    };
+  </script>
+  <!-- Three.js r128, GSAP 3.12.5 + ScrollTrigger, Lucide Icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --ivory: #FAF5EF;
+      --coral: #6D263D;
+      --amber: #D6AD70;
+      --cobalt: #C97861;
+      --rose: #6D263D;
+      --midnight: #3B292B;
+      --border: #E9DCD2;
+    }
+    html {
+      background-color: var(--ivory);
+      color: var(--midnight);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      overflow-x: hidden;
+    }
+    *:focus-visible {
+      outline: 2.5px solid var(--coral);
+      outline-offset: 3px;
+    }
+    /* 3D Split-Letter Kinetic Typography */
+    .kinetic-heading {
+      perspective: 1200px;
+    }
+    .k-line {
+      display: block;
+      overflow: hidden;
+      padding-bottom: 0.08em;
+    }
+    .k-word {
+      display: inline-block;
+      white-space: nowrap;
+      margin-right: 0.24em;
+    }
+    .k-char {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(112%) rotateX(-70deg) translateZ(-28px);
+      transform-origin: bottom center;
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform, opacity;
+    }
+    .k-visible .k-char {
+      opacity: 1;
+      transform: translateY(0%) rotateX(0deg) translateZ(0px);
+    }
+    /* Animated SVG Stroke & Wave Motion */
+    @keyframes dashFlow {
+      to { stroke-dashoffset: -120; }
+    }
+    .svg-flow-line {
+      stroke-dasharray: 8 8;
+      animation: dashFlow 5s linear infinite;
+    }
+    @keyframes pulseNode {
+      0%, 100% { transform: scale(1); opacity: 0.85; }
+      50% { transform: scale(1.24); opacity: 1; }
+    }
+    .svg-pulse-node {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: pulseNode 3.2s ease-in-out infinite;
+    }
+    @keyframes waveBar {
+      0%, 100% { transform: scaleY(0.35); }
+      50% { transform: scaleY(1); }
+    }
+    .svg-wave-bar {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: waveBar 1.4s ease-in-out infinite;
+    }
+    /* Subtle Paper Grain Overlay */
+    .editorial-grain {
+      background-image: radial-gradient(rgba(59, 41, 43, 0.06) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+    #webgl-stage {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .k-char {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+      .svg-flow-line,
+      .svg-pulse-node,
+      .svg-wave-bar {
+        animation: none !important;
+      }
+      html {
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-ivory text-midnight antialiased selection:bg-coral selection:text-ivory">
+  <!-- PERSISTENT FULL-VIEWPORT REAL-TIME 3D GLSL SCULPTURE & PARTICLE STAGE -->
+  <div id="webgl-container" aria-hidden="true" class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <canvas id="webgl-stage"></canvas>
+    <!-- Graceful Fallback if WebGL is Disabled -->
+    <div id="webgl-fallback" class="hidden absolute inset-0 bg-ivory editorial-grain">
+      <div class="absolute -top-24 right-0 h-[520px] w-[520px] rounded-full bg-coral/20 blur-3xl"></div>
+      <div class="absolute top-1/3 -left-24 h-[460px] w-[460px] rounded-full bg-slatecobalt/20 blur-3xl"></div>
+      <div class="absolute bottom-0 right-1/4 h-[440px] w-[440px] rounded-full bg-amber/25 blur-3xl"></div>
+    </div>
+  </div>
+  <!-- 1. MINIMALIST FLOATING PILL NAVIGATION -->
+  <header class="fixed top-0 inset-x-0 z-40 py-4 px-4 sm:px-8 transition-all duration-300">
+    <div class="max-w-7xl mx-auto">
+      <nav aria-label="Primary Navigation" class="flex items-center justify-between rounded-full bg-ivory/88 backdrop-blur-md border border-subtleborder px-5 sm:px-7 py-3 shadow-pill">
+        <!-- Brand Emblem & Wordmark -->
+        <a href="#hero" class="flex items-center gap-3 group">
+          <span class="relative flex h-9 w-9 items-center justify-center rounded-full bg-midnight text-ivory shadow-sm transition-transform duration-500 group-hover:rotate-12">
+            <svg viewBox="0 0 28 28" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 18 C9 8, 13 20, 17 10 C19 6, 22 12, 24 9" stroke="#D6AD70" stroke-linecap="round" />
+              <circle cx="5" cy="18" r="2" fill="#6D263D" stroke="none" />
+              <circle cx="24" cy="9" r="2" fill="#FAF5EF" stroke="none" />
+            </svg>
+          </span>
+          <span class="font-serif font-bold text-xl sm:text-2xl tracking-tight text-midnight">
+            SignBridge <span class="italic font-normal text-coral">AI</span>
+          </span>
+        </a>
+        <!-- Desktop Anchor Links -->
+        <ul class="hidden lg:flex items-center gap-7 text-xs font-semibold uppercase tracking-[0.14em] text-midnight/80">
+          <li><a href="#story" class="hover:text-coral transition-colors py-1">Our Story</a></li>
+          <li><a href="#visual-journey" class="hover:text-slatecobalt transition-colors py-1">Visual Journey</a></li>
+          <li><a href="#how-it-works" class="hover:text-amber transition-colors py-1">How It Works</a></li>
+          <li><a href="#domains" class="hover:text-coral transition-colors py-1">Seven Domains</a></li>
+          <li><a href="#trust" class="hover:text-midnight transition-colors py-1">Trust &amp; Privacy</a></li>
+        </ul>
+        <!-- Launch Prototype CTA -->
+        <div class="hidden sm:flex items-center gap-3">
+          <button type="button" data-open-walkthrough="Everyday Conversations" class="inline-flex items-center gap-2 rounded-full bg-midnight px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-ivory transition-all duration-300 hover:bg-coral hover:-translate-y-0.5 shadow-sm">
+            <span>Launch Prototype Preview</span>
+            <i data-lucide="arrow-up-right" class="w-4 h-4 text-amber"></i>
+          </button>
+        </div>
+        <!-- Mobile Menu Toggle -->
+        <button type="button" id="mobile-nav-btn" aria-expanded="false" aria-controls="mobile-nav-panel" aria-label="Open Navigation Menu" class="lg:hidden inline-flex items-center justify-center rounded-full border border-subtleborder bg-ivory p-2.5 text-midnight">
+          <i data-lucide="menu" id="nav-icon-open" class="w-5 h-5"></i>
+          <i data-lucide="x" id="nav-icon-close" class="w-5 h-5 hidden"></i>
+        </button>
+      </nav>
+      <!-- Mobile Dropdown Drawer -->
+      <div id="mobile-nav-panel" class="hidden lg:hidden mt-2 rounded-3xl bg-ivory/96 backdrop-blur-md border border-subtleborder p-6 shadow-editorialLg">
+        <ul class="flex flex-col gap-3.5 text-sm font-semibold uppercase tracking-[0.12em] text-midnight">
+          <li><a href="#story" class="mobile-nav-link block py-1 hover:text-coral">Our Story</a></li>
+          <li><a href="#visual-journey" class="mobile-nav-link block py-1 hover:text-slatecobalt">Visual Journey</a></li>
+          <li><a href="#how-it-works" class="mobile-nav-link block py-1 hover:text-amber">How It Works</a></li>
+          <li><a href="#domains" class="mobile-nav-link block py-1 hover:text-coral">Seven Domains</a></li>
+          <li><a href="#trust" class="mobile-nav-link block py-1 hover:text-midnight">Trust &amp; Privacy</a></li>
+        </ul>
+        <button type="button" data-open-walkthrough="Everyday Conversations" class="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-full bg-midnight px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-ivory">
+          <span>Launch Prototype Preview</span>
+          <i data-lucide="arrow-up-right" class="w-4 h-4 text-amber"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="narrative-root" class="relative z-10">
+    <!-- 2. FULL-SCREEN ASYMMETRICAL EDITORIAL HERO -->
+    <section id="hero" class="relative min-h-screen pt-28 pb-16 lg:pt-36 lg:pb-24 flex items-center">
+      <div class="max-w-7xl mx-auto px-4 sm:px-8 w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+          <!-- Left Asymmetrical Editorial Column -->
+          <div class="lg:col-span-7">
+            <div class="inline-flex items-center gap-2.5 rounded-full bg-white/90 backdrop-blur-md border border-subtleborder px-4 py-1.5 shadow-sm">
+              <span class="h-2 w-2 rounded-full bg-coral"></span>
+              <span class="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-midnight">
+                Indian Sign Language → Text &amp; Speech
+              </span>
+            </div>
+            <h1 class="kinetic-heading mt-6 font-serif font-semibold text-5xl sm:text-7xl xl:text-[5.5rem] leading-[0.96] tracking-[-0.02em] text-midnight"
+                data-lines="Beyond words.|Beyond barriers."
+                data-italics="words.,barriers.">
+              Beyond <span class="italic font-normal text-coral">words.</span> Beyond <span class="italic font-normal text-slatecobalt">barriers.</span>
+            </h1>
+            <p class="mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-midnight/85 bg-white/85 backdrop-blur-sm rounded-2xl p-4 border border-subtleborder">
+              SignBridge AI bridges Indian Sign Language and spoken communication—translating supported signing sequences into editable English and Hindi text, and speaking aloud only after your explicit confirmation.
+            </p>
+            <!-- Hero CTAs -->
+            <div class="mt-8 flex flex-wrap items-center gap-4">
+              <button type="button" data-open-walkthrough="Everyday Conversations" class="group inline-flex items-center gap-3 rounded-full bg-coral px-7 py-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.12em] text-ivory shadow-editorial transition-all duration-300 hover:bg-midnight hover:-translate-y-0.5">
+                <span>Explore Prototype Flow</span>
+                <span class="flex h-7 w-7 items-center justify-center rounded-full bg-amber text-midnight transition-transform duration-300 group-hover:translate-x-1">
+                  <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </span>
+              </button>
+              <a href="#visual-journey" class="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-md border border-subtleborder px-6 py-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.12em] text-midnight transition-all hover:bg-white hover:border-coral/50">
+                <span>Witness the 4-Act Bridge</span>
+              </a>
+            </div>
+            <!-- Layered Architectural Metadata Badges -->
+            <div class="mt-10 grid grid-cols-3 gap-3 max-w-lg">
+              <div class="rounded-2xl bg-white/90 backdrop-blur-md border border-subtleborder p-3.5">
+                <span class="font-mono text-[10px] uppercase tracking-wider text-coral font-semibold block">Temporal AI</span>
+                <span class="font-serif text-lg sm:text-xl font-semibold text-midnight">Sequence-Level</span>
+              </div>
+              <div class="rounded-2xl bg-white/90 backdrop-blur-md border border-subtleborder p-3.5">
+                <span class="font-mono text-[10px] uppercase tracking-wider text-slatecobalt font-semibold block">Bilingual</span>
+                <span class="font-serif text-lg sm:text-xl font-semibold text-midnight">English &amp; हिन्दी</span>
+              </div>
+              <div class="rounded-2xl bg-white/90 backdrop-blur-md border border-subtleborder p-3.5">
+                <span class="font-mono text-[10px] uppercase tracking-wider text-coral font-semibold block">Human-First</span>
+                <span class="font-serif text-lg sm:text-xl font-semibold text-midnight">Edit &amp; Confirm</span>
+              </div>
+            </div>
+          </div>
+          <!-- Right Interactive 3D Sculpture Stage Controller -->
+          <div class="lg:col-span-5 flex flex-col justify-end lg:min-h-[500px]">
+            <div class="mt-auto rounded-[2rem] bg-white/92 backdrop-blur-md border border-subtleborder p-5 sm:p-6 shadow-editorialLg">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="h-2.5 w-2.5 rounded-full bg-coral animate-ping"></span>
+                  <span class="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-midnight">
+                    Interactive 3D Silk Sculpture
+                  </span>
+                </div>
+                <button type="button" id="hero-pulse-btn" class="rounded-full bg-amber/30 hover:bg-amber border border-subtleborder px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-midnight transition-colors">
+                  Emit Signal Pulse
+                </button>
+              </div>
+              <p id="hero-stage-caption" class="mt-2.5 text-xs sm:text-sm leading-relaxed text-midnight/80">
+                <strong>Act I · Spatial Gesture:</strong> Organic silk ribbons capture continuous hand trajectory, posture, and expression across space.
+              </p>
+              <!-- Live 4-Stage Morph Switcher Pill -->
+              <div role="tablist" aria-label="3D Sculpture Transformation Stages" class="mt-4 pt-4 border-t border-subtleborder grid grid-cols-4 gap-1.5">
+                <button type="button" role="tab" aria-selected="true" data-3d-stage="0" class="stage-pill rounded-xl py-2 px-2 font-mono text-[11px] font-semibold uppercase tracking-wider bg-coral text-ivory transition-all">
+                  Gesture
+                </button>
+                <button type="button" role="tab" aria-selected="false" data-3d-stage="1" class="stage-pill rounded-xl py-2 px-2 font-mono text-[11px] font-semibold uppercase tracking-wider bg-ivory text-midnight hover:bg-amber/25 transition-all">
+                  Intent
+                </button>
+                <button type="button" role="tab" aria-selected="false" data-3d-stage="2" class="stage-pill rounded-xl py-2 px-2 font-mono text-[11px] font-semibold uppercase tracking-wider bg-ivory text-midnight hover:bg-amber/25 transition-all">
+                  Text
+                </button>
+                <button type="button" role="tab" aria-selected="false" data-3d-stage="3" class="stage-pill rounded-xl py-2 px-2 font-mono text-[11px] font-semibold uppercase tracking-wider bg-ivory text-midnight hover:bg-amber/25 transition-all">
+                  Speech
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- 3. GESTURE-TO-COMMUNICATION VISUAL STORY (4-Act Scroll-Choreographed Bridge) -->
+    <section id="visual-journey" class="relative py-24 lg:py-32 bg-ivory/90 backdrop-blur-md border-y border-subtleborder editorial-grain">
+      <div class="max-w-7xl mx-auto px-4 sm:px-8">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div class="max-w-2xl">
+            <span class="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-coral">
+              The Four-Act Metaphor
+            </span>
+            <h2 class="kinetic-heading mt-3 font-serif font-semibold text-4xl sm:text-6xl leading-[1.02] text-midnight"
+                data-lines="Gesture becomes wave.|Wave becomes voice."
+                data-italics="wave.,voice.">
+              Gesture becomes <span class="italic font-normal text-coral">wave.</span> Wave becomes <span class="italic font-normal text-slatecobalt">voice.</span>
+            </h2>
+          </div>
+          <p class="max-w-md text-xs sm:text-sm leading-relaxed text-midnight/80 bg-white border border-subtleborder rounded-2xl p-4">
+            <strong>Creative Brand Metaphor:</strong> This interactive sequence illustrates how SignBridge AI bridges visual signing and spoken language—without fabricating live AI predictions.
+          </p>
+        </div>
+        <!-- 4-Act Interactive Visual Bridge Grid with Custom Animated SVG Kinematics -->
+        <div class="mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Act 1: GESTURE -->
+          <article data-act-index="0" class="act-card group rounded-[2rem] bg-white border border-subtleborder p-6 sm:p-7 shadow-editorial transition-all duration-300 hover:-translate-y-1.5 hover:border-coral">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-semibold uppercase tracking-widest text-coral">Act 01 · Gesture</span>
+              <span class="h-2.5 w-2.5 rounded-full bg-coral"></span>
+            </div>
+            <!-- Looping SVG: Expressive Hand Trajectory & Joint Nodes -->
+            <div class="my-6 h-36 rounded-2xl bg-ivory border border-subtleborder flex items-center justify-center p-4">
+              <svg viewBox="0 0 200 110" class="w-full h-full" fill="none" aria-hidden="true">
+                <path d="M22 82 C 55 24, 95 92, 130 34 C 148 12, 168 44, 180 26" stroke="#6D263D" stroke-width="2.5" class="svg-flow-line" />
+                <path d="M30 92 C 70 46, 105 98, 145 48" stroke="#D6AD70" stroke-width="1.5" stroke-opacity="0.85" />
+                <circle cx="56" cy="48" r="5" fill="#6D263D" class="svg-pulse-node" />
+                <circle cx="96" cy="68" r="4.5" fill="#3B292B" class="svg-pulse-node" style="animation-delay:0.4s" />
+                <circle cx="130" cy="34" r="6" fill="#D6AD70" class="svg-pulse-node" style="animation-delay:0.8s" />
+                <circle cx="180" cy="26" r="5" fill="#C97861" class="svg-pulse-node" style="animation-delay:1.2s" />
+              </svg>
+            </div>
+            <h3 class="font-serif text-2xl font-semibold text-midnight">Spatial Kinematics</h3>
+            <p class="mt-2 text-sm leading-relaxed text-midnight/75">
+              Continuous hand motion, posture, and non-manual cues unfold across frames rather than frozen single-letter poses.
+            </p>
+          </article>
+          <!-- Act 2: UNDERSTANDING -->
+          <article data-act-index="1" class="act-card group rounded-[2rem] bg-white border border-subtleborder p-6 sm:p-7 shadow-editorial transition-all duration-300 hover:-translate-y-1.5 hover:border-slatecobalt">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-semibold uppercase tracking-widest text-slatecobalt">Act 02 · Understanding</span>
+              <span class="h-2.5 w-2.5 rounded-full bg-slatecobalt"></span>
+            </div>
+            <!-- Looping SVG: Temporal Landmark Mesh Convergence -->
+            <div class="my-6 h-36 rounded-2xl bg-ivory border border-subtleborder flex items-center justify-center p-4">
+              <svg viewBox="0 0 200 110" class="w-full h-full" fill="none" aria-hidden="true">
+                <polygon points="40,55 95,22 155,55 95,88" stroke="#C97861" stroke-width="2" class="svg-flow-line" />
+                <line x1="40" y1="55" x2="155" y2="55" stroke="#6D263D" stroke-width="1.5" stroke-dasharray="4 4" />
+                <line x1="95" y1="22" x2="95" y2="88" stroke="#D6AD70" stroke-width="1.5" stroke-dasharray="4 4" />
+                <circle cx="95" cy="55" r="9" fill="#C97861" fill-opacity="0.22" stroke="#C97861" stroke-width="2" class="svg-pulse-node" />
+                <circle cx="95" cy="55" r="3.5" fill="#6D263D" />
+              </svg>
+            </div>
+            <h3 class="font-serif text-2xl font-semibold text-midnight">Temporal Alignment</h3>
+            <p class="mt-2 text-sm leading-relaxed text-midnight/75">
+              Landmark trajectories are analysed across time—abstaining honestly with a repeat prompt if confidence is uncertain.
+            </p>
+          </article>
+          <!-- Act 3: TEXT -->
+          <article data-act-index="2" class="act-card group rounded-[2rem] bg-white border border-subtleborder p-6 sm:p-7 shadow-editorial transition-all duration-300 hover:-translate-y-1.5 hover:border-amber">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-semibold uppercase tracking-widest text-midnight">Act 03 · Text</span>
+              <span class="h-2.5 w-2.5 rounded-full bg-amber"></span>
+            </div>
+            <!-- Looping SVG: Structured Sentence & Bilingual Script -->
+            <div class="my-6 h-36 rounded-2xl bg-ivory border border-subtleborder flex flex-col justify-center gap-2.5 px-5">
+              <div class="flex items-center gap-2">
+                <span class="h-2 w-14 rounded-full bg-midnight"></span>
+                <span class="h-2 w-20 rounded-full bg-coral"></span>
+                <span class="h-2 w-8 rounded-full bg-amber"></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="h-2 w-24 rounded-full bg-slatecobalt"></span>
+                <span class="h-2 w-12 rounded-full bg-midnight/40"></span>
+              </div>
+              <div class="mt-1 inline-flex items-center justify-between rounded-lg bg-white border border-subtleborder px-2.5 py-1.5">
+                <span class="font-mono text-[10px] font-semibold text-midnight">EN / हिन्दी · Editable</span>
+                <span class="h-2 w-2 rounded-full bg-amber animate-ping"></span>
+              </div>
+            </div>
+            <h3 class="font-serif text-2xl font-semibold text-midnight">Editable Sentence</h3>
+            <p class="mt-2 text-sm leading-relaxed text-midnight/75">
+              The signer inspects, refines, and selects English or Hindi text before authorizing any audio output.
+            </p>
+          </article>
+          <!-- Act 4: SPEECH -->
+          <article data-act-index="3" class="act-card group rounded-[2rem] bg-white border border-subtleborder p-6 sm:p-7 shadow-editorial transition-all duration-300 hover:-translate-y-1.5 hover:border-coral">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-semibold uppercase tracking-widest text-coral">Act 04 · Speech</span>
+              <span class="h-2.5 w-2.5 rounded-full bg-coral"></span>
+            </div>
+            <!-- Looping SVG: Confirmed Harmonic Acoustic Waveform -->
+            <div class="my-6 h-36 rounded-2xl bg-ivory border border-subtleborder flex items-center justify-center p-4">
+              <svg viewBox="0 0 180 90" class="w-full h-full" fill="none" aria-hidden="true">
+                <rect x="24" y="25" width="6" height="40" rx="3" fill="#6D263D" class="svg-wave-bar" style="animation-delay:0.0s" />
+                <rect x="38" y="15" width="6" height="60" rx="3" fill="#C97861" class="svg-wave-bar" style="animation-delay:0.15s" />
+                <rect x="52" y="22" width="6" height="46" rx="3" fill="#D6AD70" class="svg-wave-bar" style="animation-delay:0.3s" />
+                <rect x="66" y="10" width="6" height="70" rx="3" fill="#3B292B" class="svg-wave-bar" style="animation-delay:0.45s" />
+                <rect x="80" y="18" width="6" height="54" rx="3" fill="#C97861" class="svg-wave-bar" style="animation-delay:0.6s" />
+                <rect x="94" y="12" width="6" height="66" rx="3" fill="#6D263D" class="svg-wave-bar" style="animation-delay:0.75s" />
+                <rect x="108" y="24" width="6" height="42" rx="3" fill="#D6AD70" class="svg-wave-bar" style="animation-delay:0.9s" />
+                <rect x="122" y="16" width="6" height="58" rx="3" fill="#6D263D" class="svg-wave-bar" style="animation-delay:1.05s" />
+                <rect x="136" y="28" width="6" height="34" rx="3" fill="#C97861" class="svg-wave-bar" style="animation-delay:1.2s" />
+                <rect x="150" y="20" width="6" height="50" rx="3" fill="#3B292B" class="svg-wave-bar" style="animation-delay:1.35s" />
+              </svg>
+            </div>
+            <h3 class="font-serif text-2xl font-semibold text-midnight">Confirmed Voice</h3>
+            <p class="mt-2 text-sm leading-relaxed text-midnight/75">
+              Clear spoken output plays in English or Hindi only after the user explicitly confirms the final sentence.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+    <!-- 4. OUR STORY SECTION (Warm Espresso #3B292B & Warm Ivory #FAF5EF Editorial Contrast) -->
+    <section id="story" class="relative py-24 lg:py-36 bg-midnight text-ivory overflow-hidden">
+      <div class="max-w-7xl mx-auto px-4 sm:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          <div class="lg:col-span-6">
+            <span class="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-amber">
+              Our Story &amp; Purpose
+            </span>
+            <h2 class="kinetic-heading mt-4 font-serif font-semibold text-4xl sm:text-6xl leading-[1.02] text-ivory"
+                data-lines="Different ways of expressing.|One way of understanding."
+                data-italics="expressing.,understanding.">
+              Different ways of <span class="italic font-normal text-amber">expressing.</span> One way of <span class="italic font-normal text-slatecobalt">understanding.</span>
+            </h2>
+            <p class="mt-6 text-base sm:text-lg leading-relaxed text-ivory/85">
+              Most basic sign-language demos recognize isolated finger-spelled letters in a single frozen frame. Real conversations are continuous—woven from hand movement, body posture, facial grammar, and context.
+            </p>
+            <p class="mt-4 text-base sm:text-lg leading-relaxed text-ivory/80">
+              SignBridge AI was conceived to bridge everyday interactions between Indian Sign Language users and non-signing listeners—while keeping human review at the center so technology assists rather than speaks over the signer.
+            </p>
+          </div>
+          <!-- Layered Editorial Contrast Composition -->
+          <div class="lg:col-span-6 space-y-6">
+            <div class="rounded-[2.25rem] bg-white text-midnight p-7 sm:p-9 shadow-editorialLg border border-subtleborder">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-xs font-semibold uppercase tracking-widest text-coral">01 · Beyond Isolated Alphabets</span>
+                <i data-lucide="layers" class="w-5 h-5 text-coral"></i>
+              </div>
+              <h3 class="mt-4 font-serif text-2xl sm:text-3xl font-semibold">
+                Sequence-Aware Interpretation
+              </h3>
+              <p class="mt-2.5 text-sm sm:text-base leading-relaxed text-midnight/80">
+                Designed around multi-frame temporal sequences for supported vocabulary rather than single-snapshot gesture gimmicks.
+              </p>
+            </div>
+            <div class="rounded-[2.25rem] bg-coral/40 backdrop-blur-md text-ivory p-7 sm:p-9 border border-amber/30">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-xs font-semibold uppercase tracking-widest text-amber">02 · Signer Dignity &amp; Agency</span>
+                <i data-lucide="user-check" class="w-5 h-5 text-amber"></i>
+              </div>
+              <h3 class="mt-4 font-serif text-2xl sm:text-3xl font-semibold">
+                Mandatory Review Before Speech
+              </h3>
+              <p class="mt-2.5 text-sm sm:text-base leading-relaxed text-ivory/85">
+                Every translated sentence can be edited in English or Hindi before speech playback—ensuring the signer owns every spoken word.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- 5. HOW SIGNBRIDGE AI WORKS (Rich Burgundy #6D263D Interactive 7-Step Rail) -->
+    <section id="how-it-works" class="relative py-24 lg:py-32 bg-coral text-ivory border-y border-amber/20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-8">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div class="max-w-2xl">
+            <span class="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-amber">
+              Seven-Step Translation Workflow
+            </span>
+            <h2 class="kinetic-heading mt-3 font-serif font-semibold text-4xl sm:text-6xl leading-[1.02] text-ivory"
+                data-lines="From natural signing|to confirmed speech."
+                data-italics="signing,confirmed">
+              From natural <span class="italic font-normal text-amber">signing</span> to <span class="italic font-normal text-ivory">confirmed</span> speech.
+            </h2>
+          </div>
+          <p class="max-w-sm text-xs sm:text-sm leading-relaxed text-ivory/90 bg-midnight/35 border border-ivory/15 rounded-2xl p-4">
+            Select any stage below to inspect the user journey and synchronize the 3D silk sculpture behind the canvas.
+          </p>
+        </div>
+        <div class="mt-14 grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          <!-- Left 7-Step Interactive Rail -->
+          <div id="workflow-rail" role="tablist" aria-label="Seven Workflow Steps" class="lg:col-span-6 flex flex-col gap-2.5"></div>
+          <!-- Right Pure White Stage Canvas -->
+          <div class="lg:col-span-6 flex">
+            <div class="w-full rounded-[2.5rem] bg-white text-midnight p-8 sm:p-11 shadow-editorialLg border border-subtleborder flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-4">
+                  <span id="wf-badge" class="inline-flex items-center gap-2 rounded-full bg-amber/30 border border-subtleborder px-4 py-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-midnight">
+                    Step 01 · Context Setup
+                  </span>
+                  <span id="wf-num" class="font-serif italic text-5xl sm:text-6xl text-midnight/25">
+                    01
+                  </span>
+                </div>
+                <h3 id="wf-title" class="mt-7 font-serif font-semibold text-3xl sm:text-4xl leading-tight text-midnight">
+                  Choose a communication context
+                </h3>
+                <p id="wf-desc" class="mt-4 text-base sm:text-lg leading-relaxed text-midnight/80">
+                  Select one of seven everyday or service settings—such as Healthcare, Education, or Everyday Conversations—to organize relevant vocabulary labels.
+                </p>
+                <!-- Animated Stage Diagram Box -->
+                <div id="wf-diagram" class="mt-7 rounded-2xl bg-ivory border border-subtleborder p-4 flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-coral text-ivory">
+                      <i data-lucide="compass" class="w-5 h-5"></i>
+                    </span>
+                    <div>
+                      <span class="font-mono text-[10px] uppercase tracking-wider text-midnight/65 block">Active Safeguard</span>
+                      <span id="wf-safeguard" class="text-xs sm:text-sm font-semibold text-midnight">Organizes UI cues without forcing predictions</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-9 pt-6 border-t border-subtleborder">
+                <div class="flex items-center justify-between font-mono text-xs text-midnight/75 mb-3">
+                  <span id="wf-progress-label">Stage 1 of 7</span>
+                  <div class="flex gap-2">
+                    <button type="button" id="wf-prev" class="rounded-full border border-subtleborder px-4 py-1.5 font-semibold text-midnight hover:bg-midnight hover:text-ivory transition-colors">
+                      Prev
+                    </button>
+                    <button type="button" id="wf-next" class="rounded-full bg-coral text-ivory px-4 py-1.5 font-semibold hover:bg-midnight transition-colors">
+                      Next
+                    </button>
+                  </div>
+                </div>
+                <div class="h-2 w-full rounded-full bg-ivory overflow-hidden">
+                  <div id="wf-bar" class="h-full rounded-full bg-coral transition-all duration-500" style="width: 14.28%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- 6. SEVEN DOMAIN EXPERIENCES (Warm Ivory #FAF5EF Asymmetric Architectural Showcase) -->
+    <section id="domains" class="relative py-24 lg:py-32 bg-ivory/92 backdrop-blur-md border-b border-subtleborder editorial-grain">
+      <div class="max-w-7xl mx-auto px-4 sm:px-8">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div class="max-w-2xl">
+            <span class="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-coral">
+              Seven Communication Environments
+            </span>
+            <h2 class="kinetic-heading mt-3 font-serif font-semibold text-4xl sm:text-6xl leading-[1.02] text-midnight"
+                data-lines="Seven worlds.|One shared engine."
+                data-italics="worlds.,shared">
+              Seven <span class="italic font-normal text-coral">worlds.</span> One <span class="italic font-normal text-slatecobalt">shared</span> engine.
+            </h2>
+          </div>
+          <p class="max-w-md text-xs sm:text-sm leading-relaxed text-midnight/85 bg-white border border-subtleborder rounded-2xl p-4 shadow-sm">
+            <strong>Honest Scope Distinction:</strong> These seven domains structure vocabulary labels and interface flows. Actual model recognition covers only validated phrases backed by trained datasets.
+          </p>
+        </div>
+        <!-- Asymmetric Architectural Domain Explorer -->
+        <div class="mt-14 grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          <!-- Left: 7 Organic Sculptural Domain Nodes -->
+          <div id="domain-nodes" class="lg:col-span-5 flex flex-col gap-3"></div>
+          <!-- Right: Dimensional Domain Showcase Stage -->
+          <div class="lg:col-span-7 flex">
+            <div id="domain-showcase" class="w-full rounded-[2.5rem] bg-white border border-subtleborder p-8 sm:p-11 shadow-editorialLg flex flex-col justify-between transition-all duration-500">
+              <div>
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                  <span id="dom-pill" class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-ivory bg-coral">
+                    Domain 01 / 07
+                  </span>
+                  <span id="dom-context-tag" class="font-mono text-xs uppercase tracking-widest text-midnight/65">
+                    Classroom &amp; Learning Support
+                  </span>
+                </div>
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+                  <div class="sm:col-span-8">
+                    <h3 id="dom-title" class="font-serif font-semibold text-3xl sm:text-5xl text-midnight">
+                      Education
+                    </h3>
+                    <p id="dom-desc" class="mt-4 text-base sm:text-lg leading-relaxed text-midnight/80">
+                      Supports classroom questions, assignment explanations, attendance interactions, and learning assistance between deaf students and educators.
+                    </p>
+                  </div>
+                  <div class="sm:col-span-4 flex justify-center">
+                    <div id="dom-emblem-box" class="h-32 w-32 rounded-[2rem] bg-coral/12 border border-coral/30 flex items-center justify-center">
+                      <i id="dom-icon" data-lucide="graduation-cap" class="w-14 h-14 text-coral"></i>
+                    </div>
+                  </div>
+                </div>
+                <!-- Sample Context Phrase Box -->
+                <div class="mt-8 rounded-2xl bg-ivory border border-subtleborder p-5">
+                  <span class="font-mono text-[10px] font-semibold uppercase tracking-widest text-midnight/60 block">
+                    Illustrative Context Example (UI Scope)
+                  </span>
+                  <p id="dom-example" class="mt-1.5 font-serif italic text-xl sm:text-2xl text-midnight">
+                    “Could you please repeat that explanation once more?”
+                  </p>
+                </div>
+              </div>
+              <div class="mt-8 pt-6 border-t border-subtleborder flex flex-wrap items-center justify-between gap-4">
+                <span class="text-xs text-midnight/70">
+                  Shared recognition engine · Vocabulary labels adapt to context
+                </span>
+                <button type="button" id="dom-try-btn" data-open-walkthrough="Education" class="inline-flex items-center gap-2 rounded-full bg-coral px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-ivory hover:bg-midnight transition-colors">
+                  <span>Preview This Context</span>
+                  <i data-lucide="arrow-up-right" class="w-4 h-4 text-amber"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- 7. HUMAN CONNECTION & PRIVACY/TRUST (Soft Terracotta #C97861 & Warm Ivory #FAF5EF) -->
+    <section id="trust" class="relative py-24 lg:py-32 bg-slatecobalt/14 backdrop-blur-md border-t border-subtleborder">
+      <div class="max-w-7xl mx-auto px-4 sm:px-8">
+        <!-- Human Connection Editorial Banner -->
+        <div class="rounded-[2.5rem] bg-slatecobalt text-ivory p-8 sm:p-12 lg:p-14 shadow-editorialLg grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div class="lg:col-span-7">
+            <span class="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-ivory/90">
+              Human-Centred Accessibility
+            </span>
+            <h2 class="kinetic-heading mt-3 font-serif font-semibold text-4xl sm:text-5xl lg:text-6xl leading-[1.02] text-ivory"
+                data-lines="Technology should|bring people closer."
+                data-italics="closer.">
+              Technology should bring people <span class="italic font-normal text-coral">closer.</span>
+            </h2>
+            <p class="mt-5 text-base sm:text-lg leading-relaxed text-ivory/95 max-w-2xl">
+              Designed for students, patients, travellers, families, and public-service staff across age groups—combining legible typography, calm motion, and complete user control over every spoken output.
+            </p>
+          </div>
+          <div class="lg:col-span-5 flex justify-center">
+            <div class="rounded-[2rem] bg-white text-midnight p-7 text-center max-w-xs w-full shadow-editorial border border-subtleborder">
+              <span class="font-mono text-[11px] font-semibold uppercase tracking-widest text-coral">Bilingual Bridge</span>
+              <div class="my-3 font-serif italic text-4xl sm:text-5xl font-semibold text-midnight">
+                ISL ↔
+              </div>
+              <div class="font-serif text-2xl font-semibold text-slatecobalt">
+                English · हिन्दी
+              </div>
+              <p class="mt-2 text-xs text-midnight/70">Confirmed by the signer prior to playback</p>
+            </div>
+          </div>
+        </div>
+        <!-- Privacy, Safety & Trust Pillars -->
+        <div class="mt-16">
+          <div class="max-w-2xl">
+            <span class="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-midnight/70">
+              Privacy, Safety &amp; Consent
+            </span>
+            <h3 class="mt-2 font-serif font-semibold text-3xl sm:text-5xl text-midnight">
+              Built on transparency and care.
+            </h3>
+          </div>
+          <div class="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="rounded-[2rem] bg-white border border-subtleborder p-6 shadow-editorial">
+              <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-slatecobalt text-ivory">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+              </span>
+              <h4 class="mt-5 font-serif text-2xl font-semibold text-midnight">On-Demand Camera</h4>
+              <p class="mt-2 text-sm leading-relaxed text-midnight/80">
+                Camera access is requested only when you actively start capture—never silently in the background.
+              </p>
+            </div>
+            <div class="rounded-[2rem] bg-white border border-subtleborder p-6 shadow-editorial">
+              <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-coral text-ivory">
+                <i data-lucide="video-off" class="w-5 h-5"></i>
+              </span>
+              <h4 class="mt-5 font-serif text-2xl font-semibold text-midnight">No Default Storage</h4>
+              <p class="mt-2 text-sm leading-relaxed text-midnight/80">
+                Raw camera video is processed temporarily for inference and discarded by default rather than stored.
+              </p>
+            </div>
+            <div class="rounded-[2rem] bg-white border border-subtleborder p-6 shadow-editorial">
+              <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber text-midnight">
+                <i data-lucide="edit-3" class="w-5 h-5"></i>
+              </span>
+              <h4 class="mt-5 font-serif text-2xl font-semibold text-midnight">Edit Before Speech</h4>
+              <p class="mt-2 text-sm leading-relaxed text-midnight/80">
+                Users review and edit translated sentences in English or Hindi before confirming speech playback.
+              </p>
+            </div>
+            <div class="rounded-[2rem] bg-white border border-subtleborder p-6 shadow-editorial">
+              <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-midnight text-ivory">
+                <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+              </span>
+              <h4 class="mt-5 font-serif text-2xl font-semibold text-midnight">Honest Abstention</h4>
+              <p class="mt-2 text-sm leading-relaxed text-midnight/80">
+                Uncertain framing or low confidence prompts the user to repeat rather than guessing a sentence.
+              </p>
+            </div>
+          </div>
+          <!-- Assistive Communication Aid Disclaimer -->
+          <div class="mt-8 rounded-[2rem] bg-white border border-subtleborder p-6 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-coral text-ivory">
+              <i data-lucide="alert-circle" class="w-6 h-6"></i>
+            </span>
+            <p class="text-sm sm:text-base leading-relaxed text-midnight">
+              <strong>Assistive Communication Aid Notice:</strong> SignBridge AI is a supportive communication aid and is <strong>not</strong> a replacement for qualified human sign language interpreters in medical, legal, financial, or emergency situations.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- 8. DRAMATIC FINAL CALL TO ACTION -->
+    <section class="py-20 lg:py-28 px-4 sm:px-8 bg-ivory/95">
+      <div class="max-w-7xl mx-auto">
+        <div class="rounded-[2.75rem] bg-midnight text-ivory px-7 py-16 sm:px-14 sm:py-24 text-center shadow-editorialLg relative overflow-hidden">
+          <div aria-hidden="true" class="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-coral/35 blur-3xl"></div>
+          <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-amber/20 blur-3xl"></div>
+          <div class="relative z-10 max-w-2xl mx-auto">
+            <span class="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-amber">
+              Experience the Platform Flow
+            </span>
+            <h2 class="kinetic-heading mt-4 font-serif font-semibold text-4xl sm:text-6xl leading-[1.02] text-ivory"
+                data-lines="Let's make understanding|effortless."
+                data-italics="understanding,effortless.">
+              Let's make <span class="italic font-normal text-amber">understanding</span> <span class="italic font-normal text-slatecobalt">effortless.</span>
+            </h2>
+            <p class="mt-5 text-base sm:text-lg text-ivory/85">
+              Step inside the interactive SignBridge AI walkthrough preview to explore domain contexts, camera framing guidance, sentence review, and English/Hindi speech synthesis.
+            </p>
+            <div class="mt-9">
+              <button type="button" data-open-walkthrough="Everyday Conversations" class="group inline-flex items-center gap-3 rounded-full bg-coral px-8 py-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-ivory shadow-editorial transition-all duration-300 hover:bg-amber hover:text-midnight hover:-translate-y-0.5">
+                <span>Enter Prototype Walkthrough</span>
+                <i data-lucide="arrow-right" class="w-5 h-5 transition-transform group-hover:translate-x-1"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- EDITORIAL FOOTER -->
+  <footer class="relative z-10 bg-ivory border-t border-subtleborder py-14">
+    <div class="max-w-7xl mx-auto px-4 sm:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-10 pb-10 border-b border-subtleborder">
+        <div class="md:col-span-5">
+          <a href="#hero" class="inline-flex items-center gap-3">
+            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-midnight text-ivory font-serif font-bold">
+              S
+            </span>
+            <span class="font-serif font-bold text-xl text-midnight">
+              SignBridge <span class="italic font-normal text-coral">AI</span>
+            </span>
+          </a>
+          <p class="mt-4 text-sm leading-relaxed text-midnight/75 max-w-sm">
+            An AI-powered Indian Sign Language (ISL) to English and Hindi text and speech platform designed around consent, human review, and inclusive visual storytelling.
+          </p>
+        </div>
+        <div class="md:col-span-3">
+          <h3 class="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-midnight/60">Navigation</h3>
+          <ul class="mt-4 space-y-2.5 text-sm font-medium text-midnight/85">
+            <li><a href="#hero" class="hover:text-coral">Home</a></li>
+            <li><a href="#visual-journey" class="hover:text-slatecobalt">4-Act Visual Journey</a></li>
+            <li><a href="#story" class="hover:text-coral">Our Story</a></li>
+            <li><a href="#how-it-works" class="hover:text-amber">How It Works</a></li>
+            <li><a href="#domains" class="hover:text-coral">Seven Domains</a></li>
+            <li><a href="#trust" class="hover:text-midnight">Trust &amp; Privacy</a></li>
+          </ul>
+        </div>
+        <div class="md:col-span-4">
+          <h3 class="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-midnight/60">Accessibility &amp; Scope</h3>
+          <p class="mt-4 text-xs sm:text-sm leading-relaxed text-midnight/75">
+            Supports keyboard navigation, visible focus states, reduced-motion preferences, and WebGL fallbacks. Assistive prototype only—not a substitute for qualified human interpreters.
+          </p>
+        </div>
+      </div>
+      <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-midnight/60">
+        <p>© 2026 SignBridge AI · Building a bridge between signing and understanding.</p>
+        <p class="font-mono">Warm Ivory &amp; Rich Burgundy Editorial Edition</p>
+      </div>
+    </div>
+  </footer>
+  <!-- 9. HONEST INTERACTIVE PROTOTYPE WALKTHROUGH MODAL -->
+  <div id="walkthrough-modal" role="dialog" aria-modal="true" aria-labelledby="wt-modal-title" class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-6 bg-midnight/65 backdrop-blur-sm">
+    <div class="relative w-full max-w-2xl rounded-[2.25rem] bg-ivory border border-subtleborder p-6 sm:p-9 shadow-editorialLg max-h-[92vh] overflow-y-auto">
+      <div class="flex items-start justify-between gap-4 pb-5 border-b border-subtleborder">
+        <div>
+          <span class="inline-flex items-center gap-2 rounded-full bg-amber/35 border border-subtleborder px-3.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-midnight">
+            UI Walkthrough Preview (Not Live AI Inference)
+          </span>
+          <h2 id="wt-modal-title" class="mt-3 font-serif font-semibold text-2xl sm:text-3xl text-midnight">
+            SignBridge AI Interactive Flow
+          </h2>
+        </div>
+        <button type="button" id="wt-close-btn" aria-label="Close Prototype Walkthrough" class="rounded-full border border-subtleborder bg-white p-2.5 text-midnight hover:bg-coral hover:text-ivory transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="mt-4 text-xs sm:text-sm leading-relaxed text-midnight/85 bg-white border border-subtleborder rounded-2xl p-4">
+        <strong>Honest Scope Notice:</strong> No live ML model backend is connected in this landing page preview, so automated sign prediction is not simulated. You can test domain selection, on-demand camera permission framing, sentence editing, and real browser speech synthesis in English or Hindi after confirmation.
+      </p>
+      <div class="mt-6 space-y-5">
+        <!-- 1. Domain Context -->
+        <div>
+          <label for="wt-domain-select" class="block font-mono text-xs font-semibold uppercase tracking-wider text-midnight/75 mb-2">
+            1. Communication Context
+          </label>
+          <select id="wt-domain-select" class="w-full rounded-2xl bg-white border border-subtleborder px-4 py-3 text-sm font-semibold text-midnight">
+            <option value="Everyday Conversations">Everyday Conversations</option>
+            <option value="Education">Education</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Banking">Banking</option>
+            <option value="Workplaces">Workplaces</option>
+            <option value="Travel">Travel</option>
+            <option value="Government & Public Services">Government &amp; Public Services</option>
+          </select>
+        </div>
+        <!-- 2. Simulated / On-Demand Camera Framing Preview -->
+        <div class="rounded-2xl bg-white border border-subtleborder p-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span class="font-mono text-xs font-semibold uppercase tracking-wider text-midnight">2. Camera Permission &amp; Framing Guide</span>
+              <p id="wt-cam-status" class="text-xs text-midnight/70 mt-0.5">Camera is off. Permission is requested only when you click Start.</p>
+            </div>
+            <button type="button" id="wt-cam-btn" class="inline-flex items-center gap-2 rounded-full bg-slatecobalt text-ivory px-4 py-2 text-xs font-semibold uppercase tracking-wider hover:bg-coral transition-colors">
+              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+              <span id="wt-cam-label">Start Camera Preview</span>
+            </button>
+          </div>
+          <div id="wt-cam-stage" class="hidden mt-4 relative rounded-2xl overflow-hidden bg-midnight aspect-video items-center justify-center">
+            <video id="wt-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+            <div aria-hidden="true" class="pointer-events-none absolute inset-4 rounded-xl border border-dashed border-amber flex items-end justify-center pb-2.5">
+              <span class="rounded-full bg-midnight/85 px-3 py-1 font-mono text-[10px] text-amber">Keep hands &amp; upper posture inside framing guide</span>
+            </div>
+            <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-coral px-3 py-1 font-mono text-[10px] font-semibold text-ivory">
+              <span class="h-2 w-2 rounded-full bg-amber animate-ping"></span>
+              LIVE PREVIEW · NOT STORED
+            </span>
+          </div>
+        </div>
+        <!-- 3. Review & Edit Sentence + Confirmed Speech -->
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <label for="wt-sentence" class="font-mono text-xs font-semibold uppercase tracking-wider text-midnight/75">
+              3. Review &amp; Edit Sentence Before Speech
+            </label>
+            <div class="inline-flex rounded-full bg-white border border-subtleborder p-0.5 text-xs font-semibold">
+              <button type="button" data-wt-lang="en-IN" class="wt-lang-btn rounded-full px-3.5 py-1 bg-coral text-ivory">English</button>
+              <button type="button" data-wt-lang="hi-IN" class="wt-lang-btn rounded-full px-3.5 py-1 text-midnight">हिन्दी (Hindi)</button>
+            </div>
+          </div>
+          <textarea id="wt-sentence" rows="2" class="w-full rounded-2xl bg-white border border-subtleborder p-3.5 text-sm sm:text-base text-midnight leading-relaxed">Hello, nice to meet you. How can I help today?</textarea>
+          <!-- Visual Acoustic Bar Feedback during Speech -->
+          <div id="wt-audio-visualizer" class="hidden mt-3 rounded-xl bg-white border border-subtleborder px-4 py-2.5 items-center justify-between">
+            <span class="font-mono text-[11px] font-semibold text-coral">Synthesizing Confirmed Speech...</span>
+            <div class="flex items-center gap-1 h-4">
+              <span class="w-1 h-full bg-coral rounded-full svg-wave-bar"></span>
+              <span class="w-1 h-full bg-amber rounded-full svg-wave-bar" style="animation-delay:0.2s"></span>
+              <span class="w-1 h-full bg-slatecobalt rounded-full svg-wave-bar" style="animation-delay:0.4s"></span>
+              <span class="w-1 h-full bg-midnight rounded-full svg-wave-bar" style="animation-delay:0.6s"></span>
+            </div>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <span id="wt-speech-status" class="text-xs text-midnight/75">Speech plays only after clicking Confirm &amp; Speak.</span>
+            <button type="button" id="wt-speak-btn" class="inline-flex items-center gap-2 rounded-full bg-coral px-5 py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-wider text-ivory shadow-sm hover:bg-midnight transition-colors">
+              <i data-lucide="volume-2" class="w-4 h-4"></i>
+              <span>Confirm &amp; Speak</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- INTERACTIVE GLSL 3D SCULPTURE, GSAP SCROLLTRIGGER & UI SCRIPT -->
+  <script>
+    (function () {
+      'use strict';
+      const sceneControl = {
+        scrollProgress: 0,
+        scrollVelocity: 0,
+        pointerX: 0,
+        pointerY: 0,
+        stageIndex: 0,      // 0: Gesture, 1: Intent, 2: Text, 3: Speech
+        pulseImpulse: 0,
+      };
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const isMobile = window.innerWidth < 768;
+      function refreshIcons() {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+      }
+      document.addEventListener('DOMContentLoaded', () => {
+        refreshIcons();
+        // 1. Mobile Navigation Drawer
+        const navBtn = document.getElementById('mobile-nav-btn');
+        const navPanel = document.getElementById('mobile-nav-panel');
+        const iconOpen = document.getElementById('nav-icon-open');
+        const iconClose = document.getElementById('nav-icon-close');
+        navBtn.addEventListener('click', () => {
+          const isOpen = !navPanel.classList.contains('hidden');
+          navPanel.classList.toggle('hidden');
+          iconOpen.classList.toggle('hidden');
+          iconClose.classList.toggle('hidden');
+          navBtn.setAttribute('aria-expanded', String(!isOpen));
+        });
+        document.querySelectorAll('.mobile-nav-link').forEach((link) => {
+          link.addEventListener('click', () => {
+            navPanel.classList.add('hidden');
+            iconOpen.classList.remove('hidden');
+            iconClose.classList.add('hidden');
+            navBtn.setAttribute('aria-expanded', 'false');
+          });
+        });
+        // 2. Split-Letter 3D Perspective Kinetic Typography
+        document.querySelectorAll('.kinetic-heading').forEach((heading) => {
+          const rawLines = heading.getAttribute('data-lines');
+          if (!rawLines) return;
+          const italicTokens = (heading.getAttribute('data-italics') || '').split(',');
+          const lines = rawLines.split('|');
+          let letterIdx = 0;
+          heading.innerHTML = lines.map((line) => {
+            const wordsHtml = line.split(' ').map((word) => {
+              const isItalic = italicTokens.includes(word);
+              const charsHtml = word.split('').map((ch) => {
+                const delay = (letterIdx++ * 0.022).toFixed(3);
+                return `<span class="k-char" style="transition-delay:${delay}s">${ch}</span>`;
+              }).join('');
+              return `<span class="k-word ${isItalic ? 'italic font-normal text-coral' : ''}">${charsHtml}</span>`;
+            }).join('');
+            return `<span class="k-line" aria-hidden="true">${wordsHtml}</span>`;
+          }).join('');
+        });
+        const titleObserver = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('k-visible');
+              titleObserver.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.14 });
+        document.querySelectorAll('.kinetic-heading').forEach((el) => titleObserver.observe(el));
+        // 3. Hero 3D Sculpture Stage Switcher & Pulse Button
+        const STAGE_CAPTIONS = [
+          '<strong>Act I · Spatial Gesture:</strong> Organic silk ribbons capture continuous hand trajectory, posture, and expression across space.',
+          '<strong>Act II · Temporal Understanding:</strong> Multi-frame landmarks align into structured semantic intent—abstaining honestly if uncertain.',
+          '<strong>Act III · Editable Text:</strong> The signer reviews and refines the translated English or Hindi sentence before playback.',
+          '<strong>Act IV · Confirmed Speech:</strong> Harmonic voice synthesis plays aloud only after explicit user confirmation.',
+        ];
+        const stagePills = document.querySelectorAll('.stage-pill');
+        const heroCaption = document.getElementById('hero-stage-caption');
+        function set3DStage(idx) {
+          sceneControl.stageIndex = idx;
+          sceneControl.pulseImpulse = 0.85;
+          heroCaption.innerHTML = STAGE_CAPTIONS[idx];
+          stagePills.forEach((pill, i) => {
+            const active = i === idx;
+            pill.setAttribute('aria-selected', String(active));
+            pill.classList.toggle('bg-coral', active);
+            pill.classList.toggle('text-ivory', active);
+            pill.classList.toggle('bg-ivory', !active);
+            pill.classList.toggle('text-midnight', !active);
+          });
+        }
+        stagePills.forEach((pill) => {
+          pill.addEventListener('click', () => set3DStage(Number(pill.dataset['3dStage'])));
+        });
+        document.getElementById('hero-pulse-btn').addEventListener('click', () => {
+          sceneControl.pulseImpulse = 1.0;
+        });
+        document.querySelectorAll('.act-card').forEach((card) => {
+          card.addEventListener('mouseenter', () => {
+            set3DStage(Number(card.dataset.actIndex));
+          });
+        });
+        // 4. Interactive 7-Step Workflow Rail (Rich Burgundy #6D263D Styling)
+        const WORKFLOW_DATA = [
+          {
+            num: '01',
+            title: 'Choose a communication context',
+            desc: 'Select one of seven everyday or service settings—such as Healthcare, Education, or Everyday Conversations—to organize relevant vocabulary labels.',
+            badge: 'Step 01 · Context Setup',
+            safeguard: 'Organizes UI cues without forcing predictions',
+            icon: 'compass',
+            stageMap: 0,
+          },
+          {
+            num: '02',
+            title: 'Allow camera access',
+            desc: 'Camera permission is requested strictly on demand when you begin capture, accompanied by clear framing guidance and a visible recording indicator.',
+            badge: 'Step 02 · Explicit Consent',
+            safeguard: 'Requested only on user action; never silently on load',
+            icon: 'camera',
+            stageMap: 0,
+          },
+          {
+            num: '03',
+            title: 'Sign naturally in front of the camera',
+            desc: 'Perform supported Indian Sign Language sequences at a natural conversational pace—capturing motion across frames rather than single static poses.',
+            badge: 'Step 03 · Temporal Input',
+            safeguard: 'Captures continuous hand & upper-body motion',
+            icon: 'hand',
+            stageMap: 0,
+          },
+          {
+            num: '04',
+            title: 'AI analyses supported signing sequences',
+            desc: 'Visual landmarks are evaluated across time. If framing or confidence is insufficient, SignBridge AI honestly requests another attempt instead of guessing.',
+            badge: 'Step 04 · Honest Inference',
+            safeguard: 'Abstains transparently on low confidence',
+            icon: 'cpu',
+            stageMap: 1,
+          },
+          {
+            num: '05',
+            title: 'Review and edit the translated sentence',
+            desc: 'Nothing is spoken automatically. Inspect the generated sentence and refine any word before proceeding.',
+            badge: 'Step 05 · Human-in-the-Loop',
+            safeguard: 'Mandatory human review prevents miscommunication',
+            icon: 'edit-3',
+            stageMap: 2,
+          },
+          {
+            num: '06',
+            title: 'Choose English or Hindi',
+            desc: 'Keep your reviewed English text or generate Hindi output through a dedicated, separately evaluated translation stage.',
+            badge: 'Step 06 · Bilingual Output',
+            safeguard: 'Explicit language choice prior to audio synthesis',
+            icon: 'languages',
+            stageMap: 2,
+          },
+          {
+            num: '07',
+            title: 'Confirm and play the speech output',
+            desc: 'Only after your explicit confirmation does SignBridge AI synthesize spoken voice in English or Hindi—or let you copy the text.',
+            badge: 'Step 07 · Confirmed Speech',
+            safeguard: 'Zero unconfirmed speech playback',
+            icon: 'volume-2',
+            stageMap: 3,
+          },
+        ];
+        let activeWfIndex = 0;
+        const wfRail = document.getElementById('workflow-rail');
+        const wfBadge = document.getElementById('wf-badge');
+        const wfNum = document.getElementById('wf-num');
+        const wfTitle = document.getElementById('wf-title');
+        const wfDesc = document.getElementById('wf-desc');
+        const wfSafeguard = document.getElementById('wf-safeguard');
+        const wfProgressLabel = document.getElementById('wf-progress-label');
+        const wfBar = document.getElementById('wf-bar');
+        function renderWorkflow(idx) {
+          activeWfIndex = idx;
+          const item = WORKFLOW_DATA[idx];
+          set3DStage(item.stageMap);
+          wfRail.innerHTML = WORKFLOW_DATA.map((step, i) => {
+            const selected = i === idx;
+            return `
+              <button type="button" role="tab" aria-selected="${selected}" data-wf-idx="${i}"
+                class="text-left rounded-2xl px-5 py-3.5 transition-all duration-300 border flex items-center justify-between gap-4 ${
+                  selected
+                    ? 'bg-white text-midnight border-subtleborder shadow-editorial translate-x-1.5'
+                    : 'bg-midnight/30 text-ivory border-ivory/15 hover:bg-midnight/45'
+                }">
+                <div class="flex items-center gap-3.5">
+                  <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-xs font-semibold ${
+                    selected ? 'bg-coral text-ivory' : 'bg-ivory/15 text-ivory'
+                  }">${step.num}</span>
+                  <span class="font-semibold text-sm sm:text-base">${step.title}</span>
+                </div>
+                <span class="font-mono text-xs ${selected ? 'text-coral font-bold' : 'text-ivory/60'}">${selected ? 'ACTIVE' : 'Inspect →'}</span>
+              </button>
+            `;
+          }).join('');
+          wfRail.querySelectorAll('button').forEach((btn) => {
+            btn.addEventListener('click', () => renderWorkflow(Number(btn.dataset.wfIdx)));
+          });
+          wfBadge.textContent = item.badge;
+          wfNum.textContent = item.num;
+          wfTitle.textContent = item.title;
+          wfDesc.textContent = item.desc;
+          wfSafeguard.textContent = item.safeguard;
+          wfProgressLabel.textContent = `Stage ${idx + 1} of 7`;
+          wfBar.style.width = `${((idx + 1) / WORKFLOW_DATA.length) * 100}%`;
+        }
+        document.getElementById('wf-prev').addEventListener('click', () => {
+          renderWorkflow(activeWfIndex === 0 ? WORKFLOW_DATA.length - 1 : activeWfIndex - 1);
+        });
+        document.getElementById('wf-next').addEventListener('click', () => {
+          renderWorkflow((activeWfIndex + 1) % WORKFLOW_DATA.length);
+        });
+        renderWorkflow(0);
+        // 5. Seven Domain Experiences (Warm Ivory #FAF5EF Asymmetric Spatial Showcase)
+        const DOMAIN_WORLDS = [
+          {
+            name: 'Education',
+            tag: 'Classroom & Learning Support',
+            accentHex: '#6D263D',
+            badgeBg: 'bg-coral',
+            emblemBg: 'bg-coral/12 border-coral/30 text-coral',
+            desc: 'Supports classroom questions, assignment explanations, attendance interactions, and learning assistance between deaf students and educators.',
+            example: '“Could you please repeat that explanation once more?”',
+            icon: 'graduation-cap',
+          },
+          {
+            name: 'Healthcare',
+            tag: 'Clinical & Triage Assistance',
+            accentHex: '#C97861',
+            badgeBg: 'bg-slatecobalt',
+            emblemBg: 'bg-slatecobalt/15 border-slatecobalt/30 text-slatecobalt',
+            desc: 'Assists patients and care staff in communicating basic symptoms, appointment check-ins, and immediate support requests.',
+            example: '“I have an appointment and need assistance at registration.”',
+            icon: 'heart-pulse',
+          },
+          {
+            name: 'Banking',
+            tag: 'Service Counter Navigation',
+            accentHex: '#D6AD70',
+            badgeBg: 'bg-amber text-midnight',
+            emblemBg: 'bg-amber/20 border-amber/40 text-midnight',
+            desc: 'Facilitates common counter enquiries, account service navigation, and everyday transaction assistance.',
+            example: '“I would like help with my account enquiry today.”',
+            icon: 'landmark',
+          },
+          {
+            name: 'Workplaces',
+            tag: 'Team Coordination & Inclusion',
+            accentHex: '#3B292B',
+            badgeBg: 'bg-midnight',
+            emblemBg: 'bg-midnight/12 border-midnight/25 text-midnight',
+            desc: 'Supports workplace introductions, task coordination, meeting check-ins, and routine colleague collaboration.',
+            example: '“Let us review the project schedule together.”',
+            icon: 'briefcase',
+          },
+          {
+            name: 'Travel',
+            tag: 'Transit & Directions',
+            accentHex: '#6D263D',
+            badgeBg: 'bg-coral',
+            emblemBg: 'bg-coral/12 border-coral/30 text-coral',
+            desc: 'Helps travellers ask for platform details, tickets, transport guidance, and accommodation directions.',
+            example: '“Excuse me, which platform does this train depart from?”',
+            icon: 'train-front',
+          },
+          {
+            name: 'Government & Public Services',
+            tag: 'Civic Desk & Form Enquiries',
+            accentHex: '#C97861',
+            badgeBg: 'bg-slatecobalt',
+            emblemBg: 'bg-slatecobalt/15 border-slatecobalt/30 text-slatecobalt',
+            desc: 'Assists citizens at public offices with form guidance, document counter enquiries, and appointment verification.',
+            example: '“Where should I submit this completed application form?”',
+            icon: 'building-2',
+          },
+          {
+            name: 'Everyday Conversations',
+            tag: 'Daily Social Connection',
+            accentHex: '#D6AD70',
+            badgeBg: 'bg-amber text-midnight',
+            emblemBg: 'bg-amber/20 border-amber/40 text-midnight',
+            desc: 'Enables natural greetings, family conversations, time references, personal preferences, and daily social exchanges.',
+            example: '“Hello, nice to meet you. How are you today?”',
+            icon: 'message-circle-heart',
+          },
+        ];
+        const domainNodes = document.getElementById('domain-nodes');
+        const domPill = document.getElementById('dom-pill');
+        const domContextTag = document.getElementById('dom-context-tag');
+        const domTitle = document.getElementById('dom-title');
+        const domDesc = document.getElementById('dom-desc');
+        const domEmblemBox = document.getElementById('dom-emblem-box');
+        const domExample = document.getElementById('dom-example');
+        const domTryBtn = document.getElementById('dom-try-btn');
+        function renderDomainShowcase(idx) {
+          const d = DOMAIN_WORLDS[idx];
+          sceneControl.pulseImpulse = 0.55;
+          domainNodes.innerHTML = DOMAIN_WORLDS.map((item, i) => {
+            const active = i === idx;
+            return `
+              <button type="button" data-dom-idx="${i}"
+                class="group text-left rounded-[1.5rem] px-5 py-4 border transition-all duration-300 flex items-center justify-between gap-4 ${
+                  active
+                    ? 'bg-coral text-ivory border-coral shadow-editorial translate-x-2'
+                    : 'bg-white text-midnight border-subtleborder hover:border-coral/40'
+                }">
+                <div class="flex items-center gap-3.5">
+                  <span class="h-3 w-3 rounded-full shrink-0" style="background-color:${active ? '#D6AD70' : item.accentHex}"></span>
+                  <span class="font-serif font-semibold text-xl sm:text-2xl">${item.name}</span>
+                </div>
+                <span class="font-mono text-[11px] uppercase tracking-wider ${active ? 'text-amber' : 'text-midnight/45'}">
+                  0${i + 1}
+                </span>
+              </button>
+            `;
+          }).join('');
+          domainNodes.querySelectorAll('button').forEach((btn) => {
+            btn.addEventListener('click', () => renderDomainShowcase(Number(btn.dataset.domIdx)));
+          });
+          domPill.textContent = `Domain 0${idx + 1} / 07`;
+          domPill.className = `inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-ivory ${d.badgeBg}`;
+          domContextTag.textContent = d.tag;
+          domTitle.textContent = d.name;
+          domDesc.textContent = d.desc;
+          domEmblemBox.className = `h-32 w-32 rounded-[2rem] border flex items-center justify-center transition-all duration-500 ${d.emblemBg}`;
+          domEmblemBox.innerHTML = `<i data-lucide="${d.icon}" class="w-14 h-14"></i>`;
+          domExample.textContent = d.example;
+          domTryBtn.setAttribute('data-open-walkthrough', d.name);
+          refreshIcons();
+        }
+        renderDomainShowcase(0);
+        // 6. Honest Prototype Walkthrough Modal
+        const modal = document.getElementById('walkthrough-modal');
+        const closeBtn = document.getElementById('wt-close-btn');
+        const domainSelect = document.getElementById('wt-domain-select');
+        const sentenceBox = document.getElementById('wt-sentence');
+        const camBtn = document.getElementById('wt-cam-btn');
+        const camLabel = document.getElementById('wt-cam-label');
+        const camStatus = document.getElementById('wt-cam-status');
+        const camStage = document.getElementById('wt-cam-stage');
+        const videoEl = document.getElementById('wt-video');
+        const speakBtn = document.getElementById('wt-speak-btn');
+        const speechStatus = document.getElementById('wt-speech-status');
+        const audioViz = document.getElementById('wt-audio-visualizer');
+        const langBtns = document.querySelectorAll('.wt-lang-btn');
+        let activeStream = null;
+        let selectedLang = 'en-IN';
+        const CONTEXT_SAMPLES = {
+          'Everyday Conversations': {
+            'en-IN': 'Hello, nice to meet you. How can I help today?',
+            'hi-IN': 'नमस्ते, आपसे मिलकर अच्छा लगा। आज मैं क्या मदद कर सकता हूँ?',
+          },
+          Education: {
+            'en-IN': 'Could you please repeat that explanation once more?',
+            'hi-IN': 'क्या आप कृपया उस व्याख्या को एक बार फिर दोहरा सकते हैं?',
+          },
+          Healthcare: {
+            'en-IN': 'I have an appointment and need assistance at registration.',
+            'hi-IN': 'मेरा अपॉइंटमेंट है और मुझे पंजीकरण में सहायता चाहिए।',
+          },
+          Banking: {
+            'en-IN': 'I would like help with my account enquiry today.',
+            'hi-IN': 'मुझे आज अपने खाते की जानकारी के लिए सहायता चाहिए।',
+          },
+          Workplaces: {
+            'en-IN': 'Let us review the project schedule together.',
+            'hi-IN': 'आइए हम सब मिलकर प्रोजेक्ट की समय-सीमा की समीक्षा करें।',
+          },
+          Travel: {
+            'en-IN': 'Excuse me, which platform does this train depart from?',
+            'hi-IN': 'क्षमा करें, यह ट्रेन किस प्लेटफॉर्म से रवाना होती है?',
+          },
+          'Government & Public Services': {
+            'en-IN': 'Where should I submit this completed application form?',
+            'hi-IN': 'मुझे यह भरा हुआ आवेदन पत्र कहाँ जमा करना है?',
+          },
+        };
+        function updateSampleText() {
+          sentenceBox.value = CONTEXT_SAMPLES[domainSelect.value][selectedLang];
+        }
+        function stopCameraStream() {
+          if (activeStream) {
+            activeStream.getTracks().forEach((track) => track.stop());
+            activeStream = null;
+          }
+          videoEl.srcObject = null;
+          camStage.classList.add('hidden');
+          camStage.classList.remove('flex');
+          camLabel.textContent = 'Start Camera Preview';
+          camStatus.textContent = 'Camera stopped. No raw video was saved.';
+        }
+        function openWalkthroughModal(domainName) {
+          if (domainName && CONTEXT_SAMPLES[domainName]) {
+            domainSelect.value = domainName;
+          }
+          updateSampleText();
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+          closeBtn.focus();
+        }
+        function closeWalkthroughModal() {
+          stopCameraStream();
+          if (window.speechSynthesis) window.speechSynthesis.cancel();
+          audioViz.classList.add('hidden');
+          audioViz.classList.remove('flex');
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }
+        document.addEventListener('click', (e) => {
+          const trigger = e.target.closest('[data-open-walkthrough]');
+          if (trigger) {
+            openWalkthroughModal(trigger.getAttribute('data-open-walkthrough'));
+          }
+        });
+        closeBtn.addEventListener('click', closeWalkthroughModal);
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeWalkthroughModal();
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            closeWalkthroughModal();
+          }
+        });
+        domainSelect.addEventListener('change', updateSampleText);
+        langBtns.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            selectedLang = btn.dataset.wtLang;
+            langBtns.forEach((b) => {
+              b.classList.remove('bg-coral', 'text-ivory');
+              b.classList.add('text-midnight');
+            });
+            btn.classList.add('bg-coral', 'text-ivory');
+            btn.classList.remove('text-midnight');
+            updateSampleText();
+          });
+        });
+        camBtn.addEventListener('click', async () => {
+          if (activeStream) {
+            stopCameraStream();
+            return;
+          }
+          try {
+            camStatus.textContent = 'Requesting on-demand camera permission...';
+            activeStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            videoEl.srcObject = activeStream;
+            camStage.classList.remove('hidden');
+            camStage.classList.add('flex');
+            camLabel.textContent = 'Stop Camera';
+            camStatus.textContent = 'Camera active for framing check. Not stored.';
+          } catch {
+            camStatus.textContent = 'Camera permission denied or unavailable in this browser.';
+          }
+        });
+        speakBtn.addEventListener('click', () => {
+          const text = sentenceBox.value.trim();
+          if (!text) {
+            speechStatus.textContent = 'Please review or enter a sentence before playback.';
+            return;
+          }
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = selectedLang;
+            utter.rate = 0.96;
+            utter.onstart = () => {
+              audioViz.classList.remove('hidden');
+              audioViz.classList.add('flex');
+              speechStatus.textContent = `Speaking confirmed ${selectedLang === 'hi-IN' ? 'Hindi' : 'English'} output...`;
+            };
+            utter.onend = () => {
+              audioViz.classList.add('hidden');
+              audioViz.classList.remove('flex');
+              speechStatus.textContent = 'Playback complete. Edit and replay anytime.';
+            };
+            utter.onerror = () => {
+              audioViz.classList.add('hidden');
+              audioViz.classList.remove('flex');
+              speechStatus.textContent = 'Speech synthesis completed or voice unavailable.';
+            };
+            window.speechSynthesis.speak(utter);
+          } else {
+            speechStatus.textContent = 'Browser SpeechSynthesis is unavailable here.';
+          }
+        });
+        // 7. GSAP ScrollTrigger Journey Sync
+        if (window.gsap && window.ScrollTrigger) {
+          gsap.registerPlugin(ScrollTrigger);
+          ScrollTrigger.create({
+            trigger: '#narrative-root',
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: 0.5,
+            onUpdate: (self) => {
+              sceneControl.scrollProgress = self.progress;
+              sceneControl.scrollVelocity = self.getVelocity() / 1000;
+            },
+          });
+        }
+      });
+      window.addEventListener('pointermove', (e) => {
+        sceneControl.pointerX = (e.clientX / window.innerWidth) * 2 - 1;
+        sceneControl.pointerY = -(e.clientY / window.innerHeight) * 2 + 1;
+      }, { passive: true });
+      // 8. REAL-TIME THREE.JS CUSTOM GLSL FRESNEL SILK RIBBONS & SPLINE PARTICLES
+      window.addEventListener('load', () => {
+        const canvas = document.getElementById('webgl-stage');
+        const fallback = document.getElementById('webgl-fallback');
+        if (!canvas || !window.THREE) {
+          if (fallback) fallback.classList.remove('hidden');
+          return;
+        }
+        let renderer;
+        try {
+          renderer = new THREE.WebGLRenderer({
+            canvas,
+            alpha: true,
+            antialias: true,
+            powerPreference: 'high-performance',
+          });
+        } catch {
+          canvas.classList.add('hidden');
+          if (fallback) fallback.classList.remove('hidden');
+          return;
+        }
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 6.8);
+        // Custom GLSL Fresnel Iridescent Silk Shader (Rich Burgundy, Champagne Gold, Soft Terracotta, Warm Ivory)
+        const silkVertexShader = `
+          uniform float uTime;
+          uniform float uMorph;
+          uniform float uPulse;
+          uniform vec2 uPointer;
+          varying vec3 vNormal;
+          varying vec3 vViewPosition;
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            vec3 pos = position;
+            float waveA = sin(pos.x * 2.2 + uTime * 1.45) * cos(pos.y * 2.0 + uTime * 1.15);
+            float waveB = sin(pos.z * 2.6 - uTime * 1.7 + uMorph * 3.14159);
+            float amp = 0.085 + uMorph * 0.09 + uPulse * 0.16;
+            pos += normal * (waveA * 0.65 + waveB * 0.35) * amp;
+            pos.x += uPointer.x * 0.12 * sin(uv.x * 6.2831);
+            pos.y += uPointer.y * 0.12 * cos(uv.x * 6.2831);
+            vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+            vViewPosition = -mvPosition.xyz;
+            vNormal = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * mvPosition;
+          }
+        `;
+        const silkFragmentShader = `
+          uniform vec3 uColorA;
+          uniform vec3 uColorB;
+          uniform vec3 uRimColor;
+          uniform float uTime;
+          uniform float uPulse;
+          varying vec3 vNormal;
+          varying vec3 vViewPosition;
+          varying vec2 vUv;
+          void main() {
+            vec3 normal = normalize(vNormal);
+            vec3 viewDir = normalize(vViewPosition);
+            float fresnel = pow(1.0 - abs(dot(normal, viewDir)), 2.2);
+            float flow = 0.5 + 0.5 * sin(vUv.x * 12.566 - uTime * 1.6);
+            vec3 baseColor = mix(uColorA, uColorB, flow);
+            vec3 finalColor = mix(baseColor, uRimColor, fresnel * 0.78 + uPulse * 0.22);
+            gl_FragColor = vec4(finalColor, 0.9);
+          }
+        `;
+        const sculptureGroup = new THREE.Group();
+        sculptureGroup.position.set(isMobile ? 0 : 1.65, 0.08, 0);
+        scene.add(sculptureGroup);
+        const tubularSegs = isMobile ? 96 : 160;
+        const radialSegs = isMobile ? 16 : 24;
+        function createShaderRibbon(rx, ry, rz, phase, radius, colA, colB, rimCol) {
+          const pts = [];
+          for (let i = 0; i <= 96; i++) {
+            const t = (i / 96) * Math.PI * 2;
+            pts.push(
+              new THREE.Vector3(
+                Math.sin(t + phase) * rx + Math.sin(t * 2) * 0.38,
+                Math.cos(t * 1.5 + phase) * ry + Math.sin(t * 3) * 0.22,
+                Math.cos(t - phase) * rz
+              )
+            );
+          }
+          const curve = new THREE.CatmullRomCurve3(pts, true);
+          const geo = new THREE.TubeGeometry(curve, tubularSegs, radius, radialSegs, true);
+          const uniforms = {
+            uTime: { value: 0 },
+            uMorph: { value: 0 },
+            uPulse: { value: 0 },
+            uPointer: { value: new THREE.Vector2(0, 0) },
+            uColorA: { value: new THREE.Color(colA) },
+            uColorB: { value: new THREE.Color(colB) },
+            uRimColor: { value: new THREE.Color(rimCol) },
+          };
+          const mat = new THREE.ShaderMaterial({
+            vertexShader: silkVertexShader,
+            fragmentShader: silkFragmentShader,
+            uniforms,
+            transparent: true,
+            side: THREE.DoubleSide,
+          });
+          const mesh = new THREE.Mesh(geo, mat);
+          sculptureGroup.add(mesh);
+          return uniforms;
+        }
+        const uniformsPrimary = createShaderRibbon(1.85, 1.25, 1.15, 0.0, 0.22, '#6D263D', '#D6AD70', '#FAF5EF');
+        const uniformsSecondary = createShaderRibbon(2.15, 1.05, 1.35, 2.1, 0.13, '#C97861', '#6D263D', '#D6AD70');
+        const uniformsTertiary = createShaderRibbon(1.55, 1.4, 0.95, 4.2, 0.095, '#D6AD70', '#C97861', '#FAF5EF');
+        // Delicate Orbital Ring
+        const ringGeo = new THREE.TorusGeometry(2.45, 0.022, 16, 120);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xd6ad70,
+          transparent: true,
+          opacity: 0.65,
+        });
+        const orbitalRing = new THREE.Mesh(ringGeo, ringMat);
+        orbitalRing.rotation.set(Math.PI / 3.1, 0.25, 0);
+        sculptureGroup.add(orbitalRing);
+        // 360 Spline-Following Communication Signal Particles
+        const pCount = isMobile ? 160 : 360;
+        const splineStreams = [0, 1, 2].map((idx) => {
+          const pts = [];
+          const ph = (idx * Math.PI * 2) / 3;
+          for (let i = 0; i <= 48; i++) {
+            const u = (i / 48) * Math.PI * 2;
+            pts.push(
+              new THREE.Vector3(
+                Math.sin(u + ph) * (2.3 + idx * 0.24),
+                Math.cos(u * 1.5 + ph) * (1.4 + idx * 0.14),
+                Math.cos(u - ph) * 1.6
+              )
+            );
+          }
+          return new THREE.CatmullRomCurve3(pts, true);
+        });
+        const paletteColors = [
+          new THREE.Color('#6D263D'), // Rich Burgundy
+          new THREE.Color('#D6AD70'), // Champagne Gold
+          new THREE.Color('#C97861'), // Soft Terracotta
+          new THREE.Color('#3B292B'), // Warm Espresso
+          new THREE.Color('#6D263D'), // Rich Burgundy
+        ];
+        const pMeta = [];
+        const pPos = new Float32Array(pCount * 3);
+        const pCol = new Float32Array(pCount * 3);
+        for (let i = 0; i < pCount; i++) {
+          const streamIdx = i % splineStreams.length;
+          const progress = Math.random();
+          const speed = 0.045 + Math.random() * 0.075;
+          const radius = 0.07 + Math.random() * 0.18;
+          const angle = Math.random() * Math.PI * 2;
+          const col = paletteColors[i % paletteColors.length];
+          pMeta.push({ streamIdx, progress, speed, radius, angle });
+          const pt = splineStreams[streamIdx].getPointAt(progress);
+          pPos[i * 3] = pt.x + Math.cos(angle) * radius;
+          pPos[i * 3 + 1] = pt.y + Math.sin(angle) * radius;
+          pPos[i * 3 + 2] = pt.z;
+          pCol[i * 3] = col.r;
+          pCol[i * 3 + 1] = col.g;
+          pCol[i * 3 + 2] = col.b;
+        }
+        const pGeo = new THREE.BufferGeometry();
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+        pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+        const pMat = new THREE.PointsMaterial({
+          size: isMobile ? 0.072 : 0.064,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.9,
+          sizeAttenuation: true,
+          depthWrite: false,
+        });
+        const particleSystem = new THREE.Points(pGeo, pMat);
+        particleSystem.position.copy(sculptureGroup.position);
+        scene.add(particleSystem);
+        const tempVec = new THREE.Vector3();
+        window.addEventListener('resize', () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        const clock = new THREE.Clock();
+        function animate() {
+          requestAnimationFrame(animate);
+          const dt = Math.min(clock.getDelta(), 0.05);
+          const t = clock.elapsedTime;
+          const { scrollProgress, scrollVelocity, pointerX, pointerY, stageIndex } = sceneControl;
+          sceneControl.pulseImpulse = Math.max(0, sceneControl.pulseImpulse - dt * 1.25);
+          const pulse = sceneControl.pulseImpulse;
+          const stageNorm = stageIndex / 3;
+          // Update GLSL Uniforms
+          [uniformsPrimary, uniformsSecondary, uniformsTertiary].forEach((u) => {
+            if (!reducedMotion) u.uTime.value = t;
+            u.uMorph.value += (stageNorm - u.uMorph.value) * 0.06;
+            u.uPulse.value = pulse;
+            u.uPointer.value.set(pointerX, pointerY);
+          });
+          // Scroll-choreographed sculpture trajectory
+          const mobileNow = window.innerWidth < 768;
+          const baseX = mobileNow ? 0 : 1.65;
+          const targetX = mobileNow
+            ? 0
+            : scrollProgress < 0.25
+            ? baseX - scrollProgress * 4.6
+            : scrollProgress < 0.65
+            ? -1.4 + (scrollProgress - 0.25) * 3.8
+            : Math.sin(scrollProgress * Math.PI * 2) * 1.1;
+          const targetY =
+            Math.sin(scrollProgress * Math.PI * 3) * 0.3 +
+            (reducedMotion ? 0 : Math.sin(t * 0.9) * 0.14);
+          const targetScale = (mobileNow ? 0.66 : 0.98 - scrollProgress * 0.14) + pulse * 0.08;
+          sculptureGroup.position.x += (targetX - sculptureGroup.position.x) * 0.055;
+          sculptureGroup.position.y += (targetY - sculptureGroup.position.y) * 0.055;
+          sculptureGroup.scale.setScalar(sculptureGroup.scale.x + (targetScale - sculptureGroup.scale.x) * 0.07);
+          const rotY = pointerX * 0.55 + scrollProgress * Math.PI * 1.6 + stageNorm * 0.6 + (reducedMotion ? 0 : t * 0.2);
+          const rotX = -pointerY * 0.35 + scrollProgress * 0.65;
+          sculptureGroup.rotation.y += (rotY - sculptureGroup.rotation.y) * 0.06;
+          sculptureGroup.rotation.x += (rotX - sculptureGroup.rotation.x) * 0.06;
+          if (!reducedMotion) {
+            orbitalRing.rotation.z -= dt * 0.22;
+            orbitalRing.rotation.x += dt * 0.14;
+          }
+          // Particle Stream Motion
+          particleSystem.position.x += (targetX + pointerX * 0.25 - particleSystem.position.x) * 0.055;
+          particleSystem.position.y += (-pointerY * 0.2 - particleSystem.position.y) * 0.055;
+          if (!reducedMotion) {
+            const dir = scrollVelocity < -0.15 ? -1 : 1;
+            const speedBoost = 1 + stageNorm * 0.65 + pulse * 1.4 + Math.min(Math.abs(scrollVelocity) * 0.35, 2.0);
+            const attr = pGeo.attributes.position;
+            for (let i = 0; i < pCount; i++) {
+              const m = pMeta[i];
+              m.progress = (m.progress + dt * m.speed * speedBoost * dir + 1) % 1;
+              splineStreams[m.streamIdx].getPointAt(m.progress, tempVec);
+              const swirl = t * 1.2 + m.angle;
+              const spread = m.radius + pulse * 0.85;
+              attr.array[i * 3] = tempVec.x + Math.cos(swirl) * spread;
+              attr.array[i * 3 + 1] = tempVec.y + Math.sin(swirl) * spread;
+              attr.array[i * 3 + 2] = tempVec.z + Math.sin(swirl * 0.75) * spread;
+            }
+            attr.needsUpdate = true;
+          }
+          camera.position.x += (pointerX * 0.35 - camera.position.x) * 0.04;
+          camera.position.y += (pointerY * 0.25 - scrollProgress * 0.28 - camera.position.y) * 0.04;
+          camera.lookAt(0, 0, 0);
+          renderer.render(scene, camera);
+        }
+        animate();
+      });
+    })();
+  </script>
+</body>
+</html>
