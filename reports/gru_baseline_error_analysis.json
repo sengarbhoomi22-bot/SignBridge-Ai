@@ -1,0 +1,1038 @@
+{
+  "summary": {
+    "checkpoint_epoch": 16,
+    "total_val_samples": 61,
+    "correct_val_samples": 3,
+    "val_accuracy": 0.0492,
+    "global_71_macro_f1": 0.0376,
+    "active_61_macro_f1": 0.0437,
+    "active_61_macro_precision": 0.041,
+    "active_61_macro_recall": 0.0492,
+    "active_classes_count": 61,
+    "zero_support_classes_count": 10
+  },
+  "top_attractor_classes": [
+    {
+      "class_id": 11,
+      "class_name": "do not make me angry",
+      "total_predicted": 7,
+      "true_positives": 0,
+      "false_positives": 7,
+      "precision": 0.0
+    },
+    {
+      "class_id": 36,
+      "class_name": "i do not mean it",
+      "total_predicted": 6,
+      "true_positives": 0,
+      "false_positives": 6,
+      "precision": 0.0
+    },
+    {
+      "class_id": 64,
+      "class_name": "why are you disappointed",
+      "total_predicted": 4,
+      "true_positives": 0,
+      "false_positives": 4,
+      "precision": 0.0
+    },
+    {
+      "class_id": 52,
+      "class_name": "try to understand",
+      "total_predicted": 4,
+      "true_positives": 0,
+      "false_positives": 4,
+      "precision": 0.0
+    },
+    {
+      "class_id": 4,
+      "class_name": "can i help you",
+      "total_predicted": 4,
+      "true_positives": 0,
+      "false_positives": 4,
+      "precision": 0.0
+    },
+    {
+      "class_id": 55,
+      "class_name": "wear the shirt",
+      "total_predicted": 3,
+      "true_positives": 0,
+      "false_positives": 3,
+      "precision": 0.0
+    },
+    {
+      "class_id": 67,
+      "class_name": "you are welcome",
+      "total_predicted": 3,
+      "true_positives": 0,
+      "false_positives": 3,
+      "precision": 0.0
+    },
+    {
+      "class_id": 9,
+      "class_name": "do not be stubborn",
+      "total_predicted": 3,
+      "true_positives": 0,
+      "false_positives": 3,
+      "precision": 0.0
+    },
+    {
+      "class_id": 2,
+      "class_name": "are you free today",
+      "total_predicted": 2,
+      "true_positives": 0,
+      "false_positives": 2,
+      "precision": 0.0
+    },
+    {
+      "class_id": 70,
+      "class_name": "you need a medicine, take this one",
+      "total_predicted": 2,
+      "true_positives": 0,
+      "false_positives": 2,
+      "precision": 0.0
+    }
+  ],
+  "top_confusion_pairs": [
+    {
+      "true_class": "do not abuse him",
+      "predicted_class": "wear the shirt",
+      "count": 1
+    },
+    {
+      "true_class": "i am afraid of that",
+      "predicted_class": "do not make me angry",
+      "count": 1
+    },
+    {
+      "true_class": "i do not agree",
+      "predicted_class": "prepare the bed",
+      "count": 1
+    },
+    {
+      "true_class": "why are you angry",
+      "predicted_class": "are you free today",
+      "count": 1
+    },
+    {
+      "true_class": "you are bad",
+      "predicted_class": "why are you disappointed",
+      "count": 1
+    },
+    {
+      "true_class": "This place is beautiful",
+      "predicted_class": "you need a medicine, take this one",
+      "count": 1
+    },
+    {
+      "true_class": "what do you want to become",
+      "predicted_class": "i do not mean it",
+      "count": 1
+    },
+    {
+      "true_class": "prepare the bed",
+      "predicted_class": "This place is beautiful",
+      "count": 1
+    },
+    {
+      "true_class": "i am feeling bored",
+      "predicted_class": "i do not mean it",
+      "count": 1
+    },
+    {
+      "true_class": "you can do it",
+      "predicted_class": "try to understand",
+      "count": 1
+    }
+  ],
+  "distribution_comparison": {
+    "train_signers_1_to_5": {
+      "num_samples": 298,
+      "signers": {
+        "3": 60,
+        "4": 58,
+        "5": 60,
+        "1": 57,
+        "2": 63
+      },
+      "seq_length": {
+        "mean": 89.85,
+        "std": 28.07,
+        "median": 89.0,
+        "min": 50,
+        "max": 160
+      },
+      "hand_presence": {
+        "left_hand_ratio_mean": 0.4582,
+        "right_hand_ratio_mean": 0.5493,
+        "both_hands_ratio_mean": 0.2604,
+        "neither_hand_ratio_mean": 0.2528
+      },
+      "norm_valid_ratio_mean": 1.0,
+      "rotations": {
+        "0": 178,
+        "90": 120
+      },
+      "landmark_coordinate_stats": {
+        "left_hand_mean": 0.1993,
+        "left_hand_std": 0.5656,
+        "right_hand_mean": -0.0991,
+        "right_hand_std": 0.4576,
+        "pose_mean": -0.1774,
+        "pose_std": 2.0252
+      }
+    },
+    "val_signer_6": {
+      "num_samples": 61,
+      "signers": {
+        "6": 61
+      },
+      "seq_length": {
+        "mean": 98.25,
+        "std": 18.66,
+        "median": 98.0,
+        "min": 62,
+        "max": 146
+      },
+      "hand_presence": {
+        "left_hand_ratio_mean": 0.3737,
+        "right_hand_ratio_mean": 0.6486,
+        "both_hands_ratio_mean": 0.2774,
+        "neither_hand_ratio_mean": 0.2552
+      },
+      "norm_valid_ratio_mean": 1.0,
+      "rotations": {
+        "0": 61
+      },
+      "landmark_coordinate_stats": {
+        "left_hand_mean": 0.41,
+        "left_hand_std": 0.8992,
+        "right_hand_mean": -0.11,
+        "right_hand_std": 0.5966,
+        "pose_mean": -0.0649,
+        "pose_std": 2.3164
+      }
+    }
+  },
+  "class_performance_highlights": {
+    "highest_performing": [
+      {
+        "class_name": "go and sleep",
+        "train_support": 5,
+        "val_support": 1,
+        "val_true_positives": 1,
+        "val_false_positives": 0,
+        "val_false_negatives": 0,
+        "val_precision": 1.0,
+        "val_recall": 1.0,
+        "val_f1": 1.0
+      },
+      {
+        "class_name": "i am crying",
+        "train_support": 5,
+        "val_support": 1,
+        "val_true_positives": 1,
+        "val_false_positives": 0,
+        "val_false_negatives": 0,
+        "val_precision": 1.0,
+        "val_recall": 1.0,
+        "val_f1": 1.0
+      },
+      {
+        "class_name": "do not take it to the heart",
+        "train_support": 5,
+        "val_support": 1,
+        "val_true_positives": 1,
+        "val_false_positives": 1,
+        "val_false_negatives": 0,
+        "val_precision": 0.5,
+        "val_recall": 1.0,
+        "val_f1": 0.6667
+      }
+    ],
+    "lowest_performing_sample_count": 58
+  },
+  "detailed_class_performance": [
+    {
+      "class_name": "He is going into the room",
+      "train_support": 2,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "This place is beautiful",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "are you free today",
+      "train_support": 4,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 2,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "are you hiding something",
+      "train_support": 1,
+      "val_support": 0,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 0,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "can i help you",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 4,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "comb your hair",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "congratulations",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "do me a favour",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "do not abuse him",
+      "train_support": 3,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "do not be stubborn",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 3,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "do not hurt me",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "do not make me angry",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 7,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "do not take it to the heart",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 1,
+      "val_false_positives": 1,
+      "val_false_negatives": 0,
+      "val_precision": 0.5,
+      "val_recall": 1.0,
+      "val_f1": 0.6667
+    },
+    {
+      "class_name": "do not worry",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "do you need something",
+      "train_support": 4,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "go and sleep",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 1,
+      "val_false_positives": 0,
+      "val_false_negatives": 0,
+      "val_precision": 1.0,
+      "val_recall": 1.0,
+      "val_f1": 1.0
+    },
+    {
+      "class_name": "had your food",
+      "train_support": 2,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "he came by train",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "he is on the way",
+      "train_support": 2,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "he she is my friend",
+      "train_support": 3,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "how are things",
+      "train_support": 2,
+      "val_support": 0,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 0,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "how can i trust you",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "how dare you",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i am afraid of that",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i am crying",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 1,
+      "val_false_positives": 0,
+      "val_false_negatives": 0,
+      "val_precision": 1.0,
+      "val_recall": 1.0,
+      "val_f1": 1.0
+    },
+    {
+      "class_name": "i am feeling bored",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i am feeling cold",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i am fine. thank you sir",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i am in dilemma what to do",
+      "train_support": 3,
+      "val_support": 0,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 0,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i am sitting in the class",
+      "train_support": 4,
+      "val_support": 0,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 0,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i am so sorry to hear that",
+      "train_support": 2,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i am suffering from fever",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i am tired",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 2,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i am very happy",
+      "train_support": 4,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i do not agree",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i do not like it",
+      "train_support": 4,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i do not mean it",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 6,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i enjoyed a lot",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i got hurt",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i like you i love you",
+      "train_support": 2,
+      "val_support": 0,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 0,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i promise",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 2,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i somehow got to know about it",
+      "train_support": 4,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "i was stopped by some one",
+      "train_support": 3,
+      "val_support": 0,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 0,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "it does not make any difference to me",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "let him take time",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "pour some more water into the glass",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "prepare the bed",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "serve the food",
+      "train_support": 4,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "shall we go outside",
+      "train_support": 3,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "speak softly",
+      "train_support": 4,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "take care of yourself",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 2,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "tell me truth",
+      "train_support": 4,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "try to understand",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 4,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "turn on light turn off light",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "we are all with you",
+      "train_support": 5,
+      "val_support": 0,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 0,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "wear the shirt",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 3,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "what did you tell him",
+      "train_support": 3,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "what do you want to become",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "what happened",
+      "train_support": 3,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "what have you planned for your career",
+      "train_support": 1,
+      "val_support": 0,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 0,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "when will the train leave",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "which collegeschool are you from",
+      "train_support": 4,
+      "val_support": 0,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 0,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "why are you angry",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "why are you crying",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "why are you disappointed",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 4,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "you are bad",
+      "train_support": 3,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "you are good",
+      "train_support": 4,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 1,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "you are welcome",
+      "train_support": 4,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 3,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "you can do it",
+      "train_support": 5,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "you do anything, i do not care",
+      "train_support": 3,
+      "val_support": 0,
+      "val_true_positives": 0,
+      "val_false_positives": 0,
+      "val_false_negatives": 0,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    },
+    {
+      "class_name": "you need a medicine, take this one",
+      "train_support": 4,
+      "val_support": 1,
+      "val_true_positives": 0,
+      "val_false_positives": 2,
+      "val_false_negatives": 1,
+      "val_precision": 0.0,
+      "val_recall": 0.0,
+      "val_f1": 0.0
+    }
+  ]
+}
