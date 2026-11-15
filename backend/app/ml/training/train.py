@@ -151,6 +151,7 @@ def train_gru(
         num_classes=num_classes,
         bidirectional=config.bidirectional,
         dropout=config.dropout,
+        pooling_strategy=getattr(config, "pooling_strategy", "endpoint"),
     ).to(device)
 
     criterion = nn.CrossEntropyLoss()

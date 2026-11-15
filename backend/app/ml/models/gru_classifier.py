@@ -43,7 +43,13 @@ class SignBridgeGRUClassifier(nn.Module):
         num_classes: int = 101,
         bidirectional: bool = True,
         dropout: float = 0.2,
+        pooling_strategy: str = "endpoint",
     ) -> None:
+        if pooling_strategy not in ("endpoint", "mean"):
+            raise ValueError(
+                f"Unsupported pooling_strategy '{pooling_strategy}'. Expected 'endpoint' or 'mean'."
+            )
+
         if not _TORCH_AVAILABLE:
             self.input_dim = input_dim
             self.hidden_dim = hidden_dim
@@ -51,6 +57,7 @@ class SignBridgeGRUClassifier(nn.Module):
             self.num_classes = num_classes
             self.bidirectional = bidirectional
             self.dropout_rate = dropout
+            self.pooling_strategy = pooling_strategy
             return
 
         super().__init__()
@@ -60,6 +67,7 @@ class SignBridgeGRUClassifier(nn.Module):
         self.num_classes = num_classes
         self.bidirectional = bidirectional
         self.dropout_rate = dropout
+        self.pooling_strategy = pooling_strategy
 
         # Input feature projection and normalization layer
         self.input_proj = nn.Sequential(
@@ -119,24 +127,38 @@ class SignBridgeGRUClassifier(nn.Module):
         packed_out, _ = self.gru(packed_in)
 
         # 4. Unpack sequence
-        unpacked_out, _ = pad_packed_sequence(packed_out, batch_first=True)
+        unpacked_out, _ = pad_packed_sequence(packed_out, batch_first=True)  # (B, T_max, gru_output_dim)
 
-        # 5. Extract endpoints
-        if self.bidirectional:
-            forward_out = unpacked_out[:, :, :self.hidden_dim]
-            backward_out = unpacked_out[:, :, self.hidden_dim:]
+        # 5. Extract representation via selected pooling strategy
+        if self.pooling_strategy == "endpoint":
+            if self.bidirectional:
+                forward_out = unpacked_out[:, :, :self.hidden_dim]
+                backward_out = unpacked_out[:, :, self.hidden_dim:]
 
-            batch_indices = torch.arange(batch_size, device=features.device)
-            last_indices = lengths - 1
+                batch_indices = torch.arange(batch_size, device=features.device)
+                last_indices = lengths - 1
 
-            final_forward = forward_out[batch_indices, last_indices, :]
-            initial_backward = backward_out[batch_indices, 0, :]
+                final_forward = forward_out[batch_indices, last_indices, :]
+                initial_backward = backward_out[batch_indices, 0, :]
 
-            seq_embedding = torch.cat([final_forward, initial_backward], dim=-1)
+                seq_embedding = torch.cat([final_forward, initial_backward], dim=-1)
+            else:
+                batch_indices = torch.arange(batch_size, device=features.device)
+                last_indices = lengths - 1
+                seq_embedding = unpacked_out[batch_indices, last_indices, :]
+        elif self.pooling_strategy == "mean":
+            # Mask-aware temporal average pooling over valid sequence frames (0 .. lengths[b] - 1)
+            max_t = unpacked_out.size(1)
+            t_range = torch.arange(max_t, device=features.device).unsqueeze(0)  # (1, T_max)
+            lengths_expanded = lengths.unsqueeze(1)  # (B, 1)
+            pad_mask = (t_range < lengths_expanded).float().unsqueeze(-1)  # (B, T_max, 1)
+
+            # Sum over valid frames only; zero-padded frames are zeroed out by pad_mask
+            sum_pooled = torch.sum(unpacked_out * pad_mask, dim=1)  # (B, gru_output_dim)
+            lengths_clamped = torch.clamp(lengths.unsqueeze(1).float(), min=1.0)  # (B, 1)
+            seq_embedding = sum_pooled / lengths_clamped  # (B, gru_output_dim)
         else:
-            batch_indices = torch.arange(batch_size, device=features.device)
-            last_indices = lengths - 1
-            seq_embedding = unpacked_out[batch_indices, last_indices, :]
+            raise ValueError(f"Unknown pooling strategy: {self.pooling_strategy}")
 
         # 6. Classification projection
         seq_embedding = self.dropout(seq_embedding)
@@ -158,7 +180,7 @@ class SignBridgeGRUClassifier(nn.Module):
             return F.softmax(logits, dim=-1)
 
     @classmethod
-    def from_config(cls, config: Dict[str, Union[int, float, bool]]) -> "SignBridgeGRUClassifier":
+    def from_config(cls, config: Dict[str, Union[int, float, bool, str]]) -> "SignBridgeGRUClassifier":
         return cls(
             input_dim=int(config.get("input_dim", 229)),
             hidden_dim=int(config.get("hidden_dim", 128)),
@@ -166,9 +188,10 @@ class SignBridgeGRUClassifier(nn.Module):
             num_classes=int(config.get("num_classes", 101)),
             bidirectional=bool(config.get("bidirectional", True)),
             dropout=float(config.get("dropout", 0.2)),
+            pooling_strategy=str(config.get("pooling_strategy", "endpoint")),
         )
 
-    def get_config(self) -> Dict[str, Union[int, float, bool]]:
+    def get_config(self) -> Dict[str, Union[int, float, bool, str]]:
         return {
             "input_dim": self.input_dim,
             "hidden_dim": self.hidden_dim,
@@ -176,4 +199,5 @@ class SignBridgeGRUClassifier(nn.Module):
             "num_classes": self.num_classes,
             "bidirectional": self.bidirectional,
             "dropout": self.dropout_rate,
+            "pooling_strategy": self.pooling_strategy,
         }

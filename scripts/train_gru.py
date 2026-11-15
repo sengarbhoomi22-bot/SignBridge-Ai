@@ -25,6 +25,7 @@ def main() -> None:
     parser.add_argument("--num-layers", type=int, default=1, help="Number of recurrent layers.")
     parser.add_argument("--no-bidirectional", action="store_true", help="Disable bidirectionality.")
     parser.add_argument("--dropout", type=float, default=0.2, help="Dropout probability.")
+    parser.add_argument("--pooling-strategy", type=str, default="endpoint", choices=["endpoint", "mean"], help="Sequence aggregation strategy ('endpoint' or 'mean').")
     parser.add_argument("--patience", type=int, default=10, help="Early stopping patience.")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility.")
     parser.add_argument("--device", type=str, default="auto", choices=["auto", "cpu", "cuda"], help="Execution device.")
@@ -41,6 +42,7 @@ def main() -> None:
         num_layers=args.num_layers,
         bidirectional=not args.no_bidirectional,
         dropout=args.dropout,
+        pooling_strategy=args.pooling_strategy,
         batch_size=args.batch_size,
         learning_rate=args.lr,
         weight_decay=args.weight_decay,
@@ -61,6 +63,7 @@ def main() -> None:
     print(f"Batch Size    : {config.batch_size}")
     print(f"Learning Rate : {config.learning_rate}")
     print(f"Hidden Dim    : {config.hidden_dim} (Bi-GRU: {config.bidirectional})")
+    print(f"Pooling Mode  : {config.pooling_strategy}")
     print()
 
     try:
