@@ -1,0 +1,79 @@
+{
+  "status": "PASS",
+  "data_dir": "data\\processed\\isl_csltr_tensors_v2",
+  "expected_dim": 229,
+  "splits": {
+    "train": {
+      "exists": true,
+      "total_files": 317,
+      "usable_for_ml": 298,
+      "qc_failed": 19,
+      "too_short": 0,
+      "corrupted": 0,
+      "signers": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "min_frames_observed": 25,
+      "max_frames_observed": 4500,
+      "categories_count": 71
+    },
+    "validation": {
+      "exists": true,
+      "total_files": 66,
+      "usable_for_ml": 61,
+      "qc_failed": 5,
+      "too_short": 0,
+      "corrupted": 0,
+      "signers": [
+        "6"
+      ],
+      "min_frames_observed": 62,
+      "max_frames_observed": 192,
+      "categories_count": 66
+    },
+    "test": {
+      "exists": true,
+      "total_files": 68,
+      "usable_for_ml": 65,
+      "qc_failed": 3,
+      "too_short": 0,
+      "corrupted": 0,
+      "signers": [
+        "7"
+      ],
+      "min_frames_observed": 58,
+      "max_frames_observed": 186,
+      "categories_count": 68
+    },
+    "quarantine": {
+      "exists": true,
+      "total_files": 2,
+      "usable_for_ml": 0,
+      "qc_failed": 0,
+      "too_short": 0,
+      "corrupted": 0,
+      "signers": [
+        "None"
+      ],
+      "min_frames_observed": 109,
+      "max_frames_observed": 116,
+      "categories_count": 2
+    }
+  },
+  "global_checks": {
+    "no_duplicate_clip_ids": true,
+    "signer_7_strictly_isolated": true,
+    "quarantine_excluded_from_train": true,
+    "zero_fabrication_confirmed": true,
+    "no_nan_or_inf": true
+  },
+  "errors": [],
+  "warnings": [],
+  "total_unique_categories": 73,
+  "train_val_category_overlap": 66,
+  "train_test_category_overlap": 68
+}

@@ -91,6 +91,7 @@ uploads/
 
 # Model weights, checkpoints and exports
 models/weights/
+models/checkpoints/
 *.pt
 *.pth
 *.pwf
