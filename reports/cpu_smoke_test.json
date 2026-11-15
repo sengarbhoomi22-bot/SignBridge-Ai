@@ -1,0 +1,382 @@
+{
+  "verdict": "CPU SMOKE TEST PASSED",
+  "timestamp": "2026-11-16 00:52:13",
+  "pytorch_version": "2.15.0+cpu",
+  "device": "cpu",
+  "steps": {
+    "step_1_dataset_selection": {
+      "status": "PASS",
+      "train_samples": 16,
+      "val_samples": 8,
+      "num_classes": 8,
+      "classes": [
+        "He is going into the room",
+        "This place is beautiful",
+        "are you free today",
+        "can i help you",
+        "comb your hair",
+        "congratulations",
+        "do me a favour",
+        "do not abuse him"
+      ]
+    },
+    "step_2_input_shapes": {
+      "status": "PASS",
+      "feature_dim": 229,
+      "all_finite": true
+    },
+    "step_3_collation": {
+      "status": "PASS",
+      "batch_shape": [
+        8,
+        130,
+        229
+      ],
+      "max_frames_in_batch": 130,
+      "padding_verified": true
+    },
+    "step_4_forward_pass": {
+      "status": "PASS",
+      "logits_shape": [
+        8,
+        8
+      ],
+      "finite_logits": true
+    },
+    "step_5_loss_computation": {
+      "status": "PASS",
+      "initial_loss": 1.9332,
+      "loss_finite": true
+    },
+    "step_6_backpropagation": {
+      "status": "PASS",
+      "backward_executed": true
+    },
+    "step_7_gradient_check": {
+      "status": "PASS",
+      "checked_parameters_count": 18,
+      "all_gradients_finite": true,
+      "max_grad_norm": 4.0259,
+      "min_grad_norm": 0.149529
+    },
+    "step_8_optimizer_update": {
+      "status": "PASS",
+      "parameters_updated": true,
+      "max_parameter_delta": 0.221568
+    },
+    "step_9_validation_pass": {
+      "status": "PASS",
+      "val_loss": 2.1755,
+      "val_accuracy": 0.25,
+      "val_macro_f1": 0.1042,
+      "val_samples_evaluated": 8
+    },
+    "step_10_checkpoint_save_and_reload": {
+      "status": "PASS",
+      "checkpoint_path": "models\\checkpoints\\smoke_test\\smoke_test_gru.pt",
+      "file_size_bytes": 3167981,
+      "reloaded_successfully": true
+    }
+  },
+  "samples": {
+    "train": [
+      {
+        "clip_id": "he_is_going_into_the_room_2",
+        "label": "He is going into the room",
+        "signer": "2"
+      },
+      {
+        "clip_id": "mvi_6503",
+        "label": "He is going into the room",
+        "signer": "3"
+      },
+      {
+        "clip_id": "beautiful",
+        "label": "This place is beautiful",
+        "signer": "4"
+      },
+      {
+        "clip_id": "beautiful_2",
+        "label": "This place is beautiful",
+        "signer": "5"
+      },
+      {
+        "clip_id": "are_you_free_today",
+        "label": "are you free today",
+        "signer": "1"
+      },
+      {
+        "clip_id": "free",
+        "label": "are you free today",
+        "signer": "3"
+      },
+      {
+        "clip_id": "can_i_help_you",
+        "label": "can i help you",
+        "signer": "1"
+      },
+      {
+        "clip_id": "can_i_help_you_2",
+        "label": "can i help you",
+        "signer": "2"
+      },
+      {
+        "clip_id": "comb",
+        "label": "comb your hair",
+        "signer": "3"
+      },
+      {
+        "clip_id": "comb_2",
+        "label": "comb your hair",
+        "signer": "4"
+      },
+      {
+        "clip_id": "congratulations",
+        "label": "congratulations",
+        "signer": "2"
+      },
+      {
+        "clip_id": "congratulations_2",
+        "label": "congratulations",
+        "signer": "1"
+      },
+      {
+        "clip_id": "do_me_a_favour",
+        "label": "do me a favour",
+        "signer": "2"
+      },
+      {
+        "clip_id": "do_me_a_favour_2",
+        "label": "do me a favour",
+        "signer": "1"
+      },
+      {
+        "clip_id": "abuse",
+        "label": "do not abuse him",
+        "signer": "3"
+      },
+      {
+        "clip_id": "do_not_abuse_him",
+        "label": "do not abuse him",
+        "signer": "1"
+      }
+    ],
+    "validation": [
+      {
+        "clip_id": "room_3",
+        "label": "He is going into the room",
+        "signer": "6"
+      },
+      {
+        "clip_id": "beautiful_3",
+        "label": "This place is beautiful",
+        "signer": "6"
+      },
+      {
+        "clip_id": "free_4",
+        "label": "are you free today",
+        "signer": "6"
+      },
+      {
+        "clip_id": "help_4",
+        "label": "can i help you",
+        "signer": "6"
+      },
+      {
+        "clip_id": "comb_4",
+        "label": "comb your hair",
+        "signer": "6"
+      },
+      {
+        "clip_id": "congratulations_4",
+        "label": "congratulations",
+        "signer": "6"
+      },
+      {
+        "clip_id": "favour_4",
+        "label": "do me a favour",
+        "signer": "6"
+      },
+      {
+        "clip_id": "abuse_3",
+        "label": "do not abuse him",
+        "signer": "6"
+      }
+    ]
+  },
+  "metrics": {
+    "accuracy": 0.25,
+    "macro_precision": 0.0667,
+    "macro_recall": 0.25,
+    "macro_f1": 0.1042,
+    "correct_samples": 2,
+    "total_samples": 8,
+    "num_classes": 8,
+    "per_class": {
+      "He is going into the room": {
+        "class_id": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1,
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 1
+      },
+      "This place is beautiful": {
+        "class_id": 1,
+        "precision": 0.2,
+        "recall": 1.0,
+        "f1": 0.3333,
+        "support": 1,
+        "true_positives": 1,
+        "false_positives": 4,
+        "false_negatives": 0
+      },
+      "are you free today": {
+        "class_id": 2,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1,
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 1
+      },
+      "can i help you": {
+        "class_id": 3,
+        "precision": 0.3333,
+        "recall": 1.0,
+        "f1": 0.5,
+        "support": 1,
+        "true_positives": 1,
+        "false_positives": 2,
+        "false_negatives": 0
+      },
+      "comb your hair": {
+        "class_id": 4,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1,
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 1
+      },
+      "congratulations": {
+        "class_id": 5,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1,
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 1
+      },
+      "do me a favour": {
+        "class_id": 6,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1,
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 1
+      },
+      "do not abuse him": {
+        "class_id": 7,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1,
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 1
+      }
+    },
+    "confusion_matrix": [
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "loss": 2.1755
+  },
+  "errors": []
+}
