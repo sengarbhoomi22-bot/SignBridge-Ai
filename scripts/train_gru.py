@@ -6,6 +6,11 @@ import argparse
 from pathlib import Path
 import sys
 
+# Ensure repository root is on sys.path
+repo_root = Path(__file__).resolve().parent.parent
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
+
 from backend.app.ml.training.config import TrainingConfig
 from backend.app.ml.training.train import train_gru
 
