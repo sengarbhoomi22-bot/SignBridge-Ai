@@ -2,6 +2,15 @@
 
 Designed for variable-length 229-dimensional landmark feature sequences.
 Implements mask-aware temporal aggregation to strictly exclude zero-padded frames.
+
+Pooling strategies:
+  endpoint  — Concatenates forward GRU final-state and backward GRU initial-state.
+              Default; retains full backward compatibility with legacy checkpoints.
+  mean      — Mask-aware temporal average over all valid frames (Experiment 1).
+  attention — Learned additive attention over valid frames only (Experiment 2).
+              A single linear scoring layer maps each GRU hidden state to a scalar
+              score, which is then masked and normalized via softmax before computing
+              a weighted sum of the hidden states.
 """
 
 from __future__ import annotations
@@ -45,9 +54,10 @@ class SignBridgeGRUClassifier(nn.Module):
         dropout: float = 0.2,
         pooling_strategy: str = "endpoint",
     ) -> None:
-        if pooling_strategy not in ("endpoint", "mean"):
+        if pooling_strategy not in ("endpoint", "mean", "attention"):
             raise ValueError(
-                f"Unsupported pooling_strategy '{pooling_strategy}'. Expected 'endpoint' or 'mean'."
+                f"Unsupported pooling_strategy '{pooling_strategy}'. "
+                f"Expected 'endpoint', 'mean', or 'attention'."
             )
 
         if not _TORCH_AVAILABLE:
@@ -90,6 +100,15 @@ class SignBridgeGRUClassifier(nn.Module):
         direction_factor = 2 if bidirectional else 1
         gru_output_dim = hidden_dim * direction_factor
 
+        # Learned temporal attention scorer (instantiated only when pooling_strategy == "attention").
+        # Maps each GRU output frame h_t ∈ R^{gru_output_dim} to a scalar score e_t ∈ R.
+        # Keeping this conditional ensures strict state_dict backward compatibility with legacy
+        # checkpoints (endpoint and mean) which do not contain attention_scorer weights.
+        if self.pooling_strategy == "attention":
+            self.attention_scorer = nn.Linear(gru_output_dim, 1, bias=True)
+        else:
+            self.attention_scorer = None
+
         # Classification head
         self.dropout = nn.Dropout(dropout)
         self.classifier = nn.Sequential(
@@ -104,6 +123,7 @@ class SignBridgeGRUClassifier(nn.Module):
         self,
         features: Any,
         lengths: Any,
+        return_attention: bool = False,
     ) -> Any:
         """Forward pass over a batch of variable-length padded sequences."""
         if not _TORCH_AVAILABLE:
@@ -130,6 +150,7 @@ class SignBridgeGRUClassifier(nn.Module):
         unpacked_out, _ = pad_packed_sequence(packed_out, batch_first=True)  # (B, T_max, gru_output_dim)
 
         # 5. Extract representation via selected pooling strategy
+        attn_weights = None
         if self.pooling_strategy == "endpoint":
             if self.bidirectional:
                 forward_out = unpacked_out[:, :, :self.hidden_dim]
@@ -157,6 +178,38 @@ class SignBridgeGRUClassifier(nn.Module):
             sum_pooled = torch.sum(unpacked_out * pad_mask, dim=1)  # (B, gru_output_dim)
             lengths_clamped = torch.clamp(lengths.unsqueeze(1).float(), min=1.0)  # (B, 1)
             seq_embedding = sum_pooled / lengths_clamped  # (B, gru_output_dim)
+        elif self.pooling_strategy == "attention":
+            # Learned additive temporal attention pooling.
+            #
+            # For each sample b and each valid timestep t in [0, T_b):
+            #   e_t = attention_scorer(h_t)          scalar energy       (B, T_max, 1)
+            #   e_t[t >= T_b] = -inf                 mask padded frames
+            #   α_t = softmax(e_t, dim=1)            normalized weights  (B, T_max, 1)
+            #   z   = Σ_t α_t * h_t                 weighted sum        (B, gru_output_dim)
+            #
+            # Guarantees:
+            #   - Padded frames receive exactly zero attention weight (-inf → softmax → 0).
+            #   - All valid frames remain eligible, including those where hands are absent.
+            #   - Σ_t α_t = 1 strictly over valid frames only.
+            #   - Output dimension = gru_output_dim = hidden_dim * 2 = 256.
+            max_t = unpacked_out.size(1)
+
+            # Compute scalar energy scores for every frame: (B, T_max, 1)
+            energy = self.attention_scorer(unpacked_out)  # (B, T_max, 1)
+
+            # Build boolean padding mask: True for valid frames, False for padded frames
+            t_range = torch.arange(max_t, device=features.device).unsqueeze(0)   # (1, T_max)
+            lengths_expanded = lengths.unsqueeze(1)                               # (B, 1)
+            valid_mask = (t_range < lengths_expanded).unsqueeze(-1)               # (B, T_max, 1)
+
+            # Set padded frame energies to -inf so softmax drives their weight to 0
+            energy = energy.masked_fill(~valid_mask, float("-inf"))
+
+            # Normalize over the time dimension → α sums to 1 over valid frames per sample
+            attn_weights = torch.softmax(energy, dim=1)  # (B, T_max, 1)
+
+            # Weighted sum of GRU outputs over valid frames
+            seq_embedding = torch.sum(attn_weights * unpacked_out, dim=1)  # (B, gru_output_dim)
         else:
             raise ValueError(f"Unknown pooling strategy: {self.pooling_strategy}")
 
@@ -164,7 +217,24 @@ class SignBridgeGRUClassifier(nn.Module):
         seq_embedding = self.dropout(seq_embedding)
         logits = self.classifier(seq_embedding)
 
+        if return_attention:
+            return logits, attn_weights
         return logits
+
+    def get_attention_weights(
+        self,
+        features: Any,
+        lengths: Any,
+    ) -> Any:
+        """Returns normalized temporal attention weights (B, T_max, 1) or None if not attention."""
+        if not _TORCH_AVAILABLE:
+            raise RuntimeError("PyTorch is required for get_attention_weights.")
+        if self.pooling_strategy != "attention":
+            return None
+        self.eval()
+        with torch.no_grad():
+            _, attn_weights = self.forward(features, lengths, return_attention=True)
+            return attn_weights
 
     def predict_proba(
         self,

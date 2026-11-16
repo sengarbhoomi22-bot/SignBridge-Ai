@@ -22,7 +22,7 @@ class TrainingConfig:
     bidirectional: bool = True
     dropout: float = 0.2
     num_classes: int = 101
-    pooling_strategy: str = "endpoint"  # 'endpoint' or 'mean'
+    pooling_strategy: str = "endpoint"  # 'endpoint', 'mean', or 'attention'
 
     # Optimization
     batch_size: int = 16

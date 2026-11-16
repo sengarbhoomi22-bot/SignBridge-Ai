@@ -25,7 +25,7 @@ def main() -> None:
     parser.add_argument("--num-layers", type=int, default=1, help="Number of recurrent layers.")
     parser.add_argument("--no-bidirectional", action="store_true", help="Disable bidirectionality.")
     parser.add_argument("--dropout", type=float, default=0.2, help="Dropout probability.")
-    parser.add_argument("--pooling-strategy", type=str, default="endpoint", choices=["endpoint", "mean"], help="Sequence aggregation strategy ('endpoint' or 'mean').")
+    parser.add_argument("--pooling-strategy", type=str, default="endpoint", choices=["endpoint", "mean", "attention"], help="Sequence aggregation strategy ('endpoint', 'mean', or 'attention').")
     parser.add_argument("--patience", type=int, default=10, help="Early stopping patience.")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility.")
     parser.add_argument("--device", type=str, default="auto", choices=["auto", "cpu", "cuda"], help="Execution device.")
